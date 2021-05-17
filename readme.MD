@@ -13,20 +13,19 @@
 
 
 ### Uzyskanie większej liczby punktów niż 50 wymaga:
-    - [ ] 1. zaimplementowania logiki, która wykorzystuje więcej niż 3 rodzaje przesyłanych wiadomości oraz  
-  
-    - [ ] 2. wykorzystania co najmniej 1 mechanizmu z poniższych:
-        ~~a. synchronizacja wątków,~~
-        - [ ] b. obsługa większej liczby graczy niż dwóch jednocześnie,                                      
-        ~~c. obsługa wielu procesów równolegle,~~
+- [ ] 1. zaimplementowania logiki, która wykorzystuje więcej niż 3 rodzaje przesyłanych wiadomości oraz  
+- [ ] 2. wykorzystania co najmniej 1 mechanizmu z poniższych:
+    ~~a. synchronizacja wątków,~~
+    - [ ] b. obsługa większej liczby graczy niż dwóch jednocześnie,                                      
+    ~~c. obsługa wielu procesów równolegle,~~
 
 ### Uzyskanie większej liczby punktów niż 65 wymaga:
-    - [ ] 1. spełnienia warunków z punktu powyższego oraz
-    - [ ] 2. wykorzystania co najmniej 2 z poniższych mechanizmów:
-            ~~a. inna architektura niż klient-serwer, ~~
-            ~~b. asynchroniczność (p2p),~~
-        - [ ] c. serwer zdarzeniowy, 
-        - [ ] d. połączenia szyfrowane.  
+- [ ] 1. spełnienia warunków z punktu powyższego oraz
+- [ ] 2. wykorzystania co najmniej 2 z poniższych mechanizmów:
+        ~~a. inna architektura niż klient-serwer, ~~
+        ~~b. asynchroniczność (p2p),~~
+    - [ ] c. serwer zdarzeniowy, 
+    - [ ] d. połączenia szyfrowane.  
 
 
 ## Schemat programu
