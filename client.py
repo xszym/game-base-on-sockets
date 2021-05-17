@@ -84,15 +84,15 @@ class Player(pygame.sprite.Sprite):
 
         if pressed_keys[K_SPACE]:
             if self.angle == 0:
-                new_enemy = Enemy(self.rect.centerx+5,self.rect.bottom-5, self.angle)
+                new_Bullet = Bullet(self.rect.centerx+5,self.rect.bottom-5, self.angle)
             elif self.angle == 90:
-                new_enemy = Enemy(self.rect.right, self.rect.centery, self.angle)
+                new_Bullet = Bullet(self.rect.right, self.rect.centery, self.angle)
             elif self.angle == 180:
-                new_enemy = Enemy(self.rect.centerx+5, self.rect.top-5, self.angle)
+                new_Bullet = Bullet(self.rect.centerx+5, self.rect.top-5, self.angle)
             elif self.angle == 270:
-                new_enemy = Enemy(self.rect.left, self.rect.centery, self.angle)
-            enemies.add(new_enemy)
-            all_sprites.add(new_enemy)
+                new_Bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
+            bullets.add(new_Bullet)
+            all_sprites.add(new_Bullet)
 
         # Keep player on the screen
         if self.rect.left < 0:
@@ -105,11 +105,11 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = SCREEN_HEIGHT
 
 
-# Define the enemy object extending pygame.sprite.Sprite
+# Define the Bullet object extending pygame.sprite.Sprite
 # Instead of a surface, we use an image for a better looking sprite
-class Enemy(pygame.sprite.Sprite):
+class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
-        super(Enemy, self).__init__()
+        super(Bullet, self).__init__()
         self.surf = pygame.image.load("missile.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         # The starting position is randomly generated, as is the speed
@@ -123,7 +123,7 @@ class Enemy(pygame.sprite.Sprite):
         self.surf = pygame.transform.rotate(self.surf, angle+90)
         self.angle = angle
 
-    # Move the enemy based on speed
+    # Move the Bullet based on speed
     # Remove it when it passes the left edge of the screen
     def update(self):
         if self.angle == 0:
@@ -184,9 +184,9 @@ clock = pygame.time.Clock()
 # The size is determined by the constant SCREEN_WIDTH and SCREEN_HEIGHT
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-# Create custom events for adding a new enemy and cloud
-# ADDENEMY = pygame.USEREVENT + 1
-# pygame.time.set_timer(ADDENEMY, 250)
+# Create custom events for adding a new Bullet and cloud
+# ADDBullet = pygame.USEREVENT + 1
+# pygame.time.set_timer(ADDBullet, 250)
 # ADDCLOUD = pygame.USEREVENT + 2
 # pygame.time.set_timer(ADDCLOUD, 1000)
 
@@ -212,7 +212,7 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 # At this point, we're done, so we can stop and quit the mixer
 # pygame.mixer.music.stop()
 # pygame.mixer.quit()
-enemies = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 clouds = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 
@@ -223,15 +223,15 @@ def start_the_game():
     # Create our 'player'
     player = Player(USER_NAME)
 
-    # Create groups to hold enemy sprites, cloud sprites, and all sprites
-    # - enemies is used for collision detection and position updates
+    # Create groups to hold Bullet sprites, cloud sprites, and all sprites
+    # - bullets is used for collision detection and position updates
     # - clouds is used for position updates
     # - all_sprites isused for rendering
-    global enemies
+    global bullets
     global clouds
     global all_sprites
 
-    enemies = pygame.sprite.Group()
+    bullets = pygame.sprite.Group()
     clouds = pygame.sprite.Group()
     all_sprites = pygame.sprite.Group()
     all_sprites.add(player)
@@ -250,12 +250,12 @@ def start_the_game():
             elif event.type == QUIT:
                 running = False
 
-        # # Should we add a new enemy?
-        # elif event.type == ADDENEMY:
-        #     # Create the new enemy, and add it to our sprite groups
-        #     new_enemy = Enemy()
-        #     enemies.add(new_enemy)
-        #     all_sprites.add(new_enemy)
+        # # Should we add a new Bullet?
+        # elif event.type == ADDBullet:
+        #     # Create the new Bullet, and add it to our sprite groups
+        #     new_Bullet = Bullet()
+        #     bullets.add(new_Bullet)
+        #     all_sprites.add(new_Bullet)
 
         # # Should we add a new cloud?
         # elif event.type == ADDCLOUD:
@@ -269,8 +269,8 @@ def start_the_game():
         print(pressed_keys)
         player.update(pressed_keys)
 
-        # Update the position of our enemies and clouds
-        enemies.update()
+        # Update the position of our bullets and clouds
+        bullets.update()
         clouds.update()
 
         # Fill the screen with sky blue
@@ -280,8 +280,8 @@ def start_the_game():
         for entity in all_sprites:
             screen.blit(entity.surf, entity.rect)
 
-        # Check if any enemies have collided with the player
-        # if pygame.sprite.spritecollideany(player, enemies):
+        # Check if any bullets have collided with the player
+        # if pygame.sprite.spritecollideany(player, bullets):
         #     # If so, remove the player
         #     player.kill()
 
@@ -300,23 +300,31 @@ def start_the_game():
         clock.tick(30)
 
 
-def join_room(code):
-    try:
-        logging.info('TODO - próba dołączenia do  room')
-    except:
-        show_popup("Error")
-    return
+def create_menu_main():
+    join_menu = create_menu_join()
+    about_menu = create_menu_about()
+    main_menu = pygame_menu.Menu('PAS 2021 - CS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=pygame_menu.themes.THEME_BLUE)
+    main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=10, onchange=check_name)
+    main_menu.add.button('Host Game', host_game)
+    main_menu.add.button('Join game', join_menu)#  maxchar=4, onreturn=)
+    main_menu.add.button('About', about_menu)
+    main_menu.add.button('Quit', pygame_menu.events.EXIT)
+    return main_menu
+    
 
+def create_menu_join():
+    join_menu = pygame_menu.Menu(
+        height=WINDOW_SIZE[0],
+        title='Play Menu',
+        width=WINDOW_SIZE[1]
+    )
 
-def host_game():
-    start_the_game()
-    # messagebox.showinfo('Continue','OK')
-    return
-
-
-def check_name(value):
-    global USER_NAME
-    USER_NAME = value
+    join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
+    join_status_button = join_menu.add.button('Status: Insert code', None)
+    # join_menu.add.button('Join room', join_room)
+    join_menu.add.button('Main menu', pygame_menu.events.BACK)
+    join_status_button.add_draw_callback(draw_update_function_join_status_button)
+    return join_menu
 
 
 join_status = 'Insert room key'
@@ -324,7 +332,7 @@ def update_join_status(code):
     logging.debug(f'Room key {code}')
     global join_status
     if len(code) < 4:
-        join_status = 'Insert room key \/'
+        join_status = 'Insert room key...'
     else:
         try:
             join_status = 'Key looking okej'
@@ -333,71 +341,49 @@ def update_join_status(code):
             join_status = 'Joining fail'
 
 
+def join_room(code):
+    try:
+        logging.info('TODO - próba dołączenia do  room')
+    except:
+        show_popup("Error")
+    return
 
-submenu_theme = pygame_menu.themes.THEME_DEFAULT.copy()
-submenu_theme.widget_font_size = 15
 
-
-# -------------------------------------------------------------------------
-# Create menus:Join
-# -------------------------------------------------------------------------
 def draw_update_function_join_status_button(widget, menu):
-    # t = widget.get_attribute('t', 0)
-    # t = menu.get_clock().get_time()
     global join_status
     widget.set_title(join_status)
-    # widget.set_padding(10*(1 + math.sin(t))) # Oscillating padding
-
-join_menu = pygame_menu.Menu(
-    height=WINDOW_SIZE[0],
-    title='Play Menu',
-    width=WINDOW_SIZE[1]
-)
-
-join_code_text_input = join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
-join_status_button = join_menu.add.button('Status: Insert code', None)
-# join_menu.add.button('Join room', join_room)
-join_menu.add.button('Main menu', pygame_menu.events.BACK)
-join_status_button.add_draw_callback(draw_update_function_join_status_button)
 
 
-# -------------------------------------------------------------------------
-# Create menus:About
-# -------------------------------------------------------------------------
-about_theme = pygame_menu.themes.THEME_DEFAULT.copy()
-about_theme.widget_margin = (0, 0)
+def create_menu_about():
+    about_theme = pygame_menu.themes.THEME_DEFAULT.copy()
+    about_theme.widget_margin = (0, 0)
+    about_menu = pygame_menu.Menu(
+        height=WINDOW_SIZE[0],
+        theme=about_theme,
+        title='About',
+        width=WINDOW_SIZE[1]
+    )
 
-about_menu = pygame_menu.Menu(
-    height=WINDOW_SIZE[0],
-    theme=about_theme,
-    title='About',
-    width=WINDOW_SIZE[1]
-)
-
-for m in ABOUT:
-    about_menu.add.label(m, align=pygame_menu.locals.ALIGN_CENTER, font_size=20)
-about_menu.add.vertical_margin(30)
-about_menu.add.button('Return to menu', pygame_menu.events.BACK)
+    for m in ABOUT:
+        about_menu.add.label(m, align=pygame_menu.locals.ALIGN_CENTER, font_size=20)
+    
+    about_menu.add.vertical_margin(30)
+    about_menu.add.button('Return to menu', pygame_menu.events.BACK)
+    return about_menu
 
 
-main_menu = pygame_menu.Menu('PAS 2021 - CS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=pygame_menu.themes.THEME_BLUE)
-main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=10, onchange=check_name)
-main_menu.add.button('Host Game', host_game)
-main_menu.add.button('Join game', join_menu)#  maxchar=4, onreturn=)
-main_menu.add.button('About', about_menu)
-main_menu.add.button('Quit', pygame_menu.events.EXIT)
+def check_name(value):
+    global USER_NAME
+    USER_NAME = value
 
-# def draw_update_function(widget, menu):
-#     # t = widget.get_attribute('t', 0)
-#     # t = menu.get_clock().get_time()
 
-#     widget.set_title("t")
-#     # widget.set_padding(10*(1 + math.sin(t))) # Oscillating padding
-
-# button = main_menu.add.button('This button updates its padding', None)
-# button.add_draw_callback(draw_update_function)
+def host_game():
+    start_the_game()
+    # messagebox.showinfo('Continue','OK')
+    return
 
 
 if __name__ == '__main__':
+    main_menu = create_menu_main()
     while(True):
         main_menu.mainloop(screen)
