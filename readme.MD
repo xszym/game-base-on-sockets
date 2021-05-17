@@ -32,14 +32,14 @@
 ## Schemat programu
 1. Przy pierwszym podłączeniu Klient i Serwer wymieniają się kluczami :) 
 2. Klient może stworzyć lub dołączyć do pokój (2 przyciski)
-    Tworzenie: (1 napis i 1 przycisk)
-        - [ ] Po kliknięciu stwórz pokój dostaje kod dołacznia do pokóju od serwara
-        - [ ] otrzymuje ile osób dołączyło 
-        - [ ] Ma przycisk START GAME
-    Dołączenie. (same napisy)
-        - [ ] dołącza do kanały 
-        - [ ] otrzymuje ile osób jest w pokóju
-        - [ ] ma napis czekanie na hosta
+Tworzenie: (1 napis i 1 przycisk)
+- [ ] Po kliknięciu stwórz pokój dostaje kod dołacznia do pokóju od serwara
+- [ ] otrzymuje ile osób dołączyło 
+- [ ] Ma przycisk START GAME
+Dołączenie. (same napisy)
+- [ ] dołącza do kanały 
+- [ ] otrzymuje ile osób jest w pokóju
+- [ ] ma napis czekanie na hosta
 
 ## Komunikacja
 Rodzaje wiadmości:
