@@ -48,7 +48,7 @@ USER_NAME = "ProKiller"
 class Player(pygame.sprite.Sprite):
     def __init__(self, name):
         super(Player, self).__init__()
-        self.surf = pygame.image.load("player.png").convert()
+        self.surf = pygame.image.load("media/player.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         self.rect = self.surf.get_rect()
         self.angle = 90
@@ -110,7 +110,7 @@ class Player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, angle):
         super(Bullet, self).__init__()
-        self.surf = pygame.image.load("missile.png").convert()
+        self.surf = pygame.image.load("media/missile.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         # The starting position is randomly generated, as is the speed
         self.rect = self.surf.get_rect(
@@ -153,7 +153,7 @@ class Bullet(pygame.sprite.Sprite):
 class Cloud(pygame.sprite.Sprite):
     def __init__(self):
         super(Cloud, self).__init__()
-        self.surf = pygame.image.load("cloud.png").convert()
+        self.surf = pygame.image.load("media/cloud.png").convert()
         self.surf.set_colorkey((0, 0, 0), RLEACCEL)
         # The starting position is randomly generated
         self.rect = self.surf.get_rect(
