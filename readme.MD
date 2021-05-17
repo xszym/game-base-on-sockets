@@ -62,3 +62,14 @@ Rodzaje wiadmości:
 - [ ] mogą być invide (np. po kodzie)
 - [ ] wysyłanie i odbieranie na odzielnym wątku
 - [ ] wymiana kluczy na początku (rejstracja)
+
+
+## Setup
+- ```pip install -r requirements.txt```
+
+## Run
+- ```python server.py```
+- ```python client.py```
+
+
+
