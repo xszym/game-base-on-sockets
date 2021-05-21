@@ -1,9 +1,14 @@
 # Import the pygame module
 import pygame
+
+# Import menu to pygame
 import pygame_menu
+
+# dialog box
 from tkinter import *
 from tkinter import messagebox
 Tk().wm_withdraw() #to hide the main window
+
 
 def show_popup(msg):
     messagebox.showinfo(msg,'OK')
@@ -13,7 +18,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 import math
-
 # Import random for random numbers
 import random
 
@@ -33,8 +37,9 @@ from pygame.locals import (
 )
 
 
-ABOUT = ['Author: {0}'.format("Dorota i Szymon"),
+ABOUT = ['Authors: Dorota i Szymon',
          'PAS 2021']
+
 
 # Define constants for the screen width and height
 SCREEN_WIDTH = 640
@@ -55,17 +60,18 @@ class Player(pygame.sprite.Sprite):
 
         self.font = pygame.font.SysFont("Arial", 10)
         self.textSurf = self.font.render(name, 1, pygame.Color('white'))
+        self.textSurfRotated = pygame.transform.rotate(self.textSurf, 180)
+
         W = self.textSurf.get_width()
         H = self.textSurf.get_height()
         self.surf.blit(self.textSurf, [self.rect.width/2 - W/2, self.rect.height/4 - H/2]) # 
-        self.surf.blit(self.textSurf, [self.rect.width/2 - W/2, self.rect.height*3/4 - H/2]) # 
+        self.surf.blit(self.textSurfRotated, [self.rect.width/2 - W/2, self.rect.height*3/4 - H/2]) # 
 
     def rotate_to_angle(self, _angle):
         if _angle != self.angle:
             angle_delta = _angle - self.angle
             self.surf = pygame.transform.rotate(self.surf, angle_delta)
             self.angle = _angle
-            # self.rect = self.surf.get_rect()
 
     # Move the sprite based on keypresses
     def update(self, pressed_keys):
@@ -119,7 +125,7 @@ class Bullet(pygame.sprite.Sprite):
                 y,
             )
         )
-        self.speed = 10
+        self.speed = 17
         self.surf = pygame.transform.rotate(self.surf, angle+90)
         self.angle = angle
 
@@ -135,9 +141,6 @@ class Bullet(pygame.sprite.Sprite):
         elif self.angle == 270:
             self.rect.move_ip(-self.speed, 0)
 
-        # if self.rect.right < 0:
-        #     self.kill()
-        # Keep player on the screen
         if self.rect.left < 0:
             self.kill()
         elif self.rect.right > SCREEN_WIDTH:
@@ -148,31 +151,8 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
 
 
-# Define the cloud object extending pygame.sprite.Sprite
-# Use an image for a better looking sprite
-class Cloud(pygame.sprite.Sprite):
-    def __init__(self):
-        super(Cloud, self).__init__()
-        self.surf = pygame.image.load("media/cloud.png").convert()
-        self.surf.set_colorkey((0, 0, 0), RLEACCEL)
-        # The starting position is randomly generated
-        self.rect = self.surf.get_rect(
-            center=(
-                random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
-                random.randint(0, SCREEN_HEIGHT),
-            )
-        )
-
-    # Move the cloud based on a constant speed
-    # Remove it when it passes the left edge of the screen
-    def update(self):
-        self.rect.move_ip(-5, 0)
-        if self.rect.right < 0:
-            self.kill()
-
-
 # Setup for sounds, defaults are good
-# pygame.mixer.init()
+pygame.mixer.init()
 
 # Initialize pygame
 pygame.init()
@@ -184,34 +164,22 @@ clock = pygame.time.Clock()
 # The size is determined by the constant SCREEN_WIDTH and SCREEN_HEIGHT
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
-# Create custom events for adding a new Bullet and cloud
-# ADDBullet = pygame.USEREVENT + 1
-# pygame.time.set_timer(ADDBullet, 250)
-# ADDCLOUD = pygame.USEREVENT + 2
-# pygame.time.set_timer(ADDCLOUD, 1000)
-
-
-
 # Load and play our background music
 # Sound source: http://ccmixter.org/files/Apoxode/59262
 # License: https://creativecommons.org/licenses/by/3.0/
-# pygame.mixer.music.load("Apoxode_-_Electric_1.mp3")
+# pygame.mixer.music.load("media/Apoxode_-_Electric_1.mp3")
 # pygame.mixer.music.play(loops=-1)
 
 # Load all our sound files
-# Sound sources: Jon Fincher
-# move_up_sound = pygame.mixer.Sound("Rising_putter.ogg")
-# move_down_sound = pygame.mixer.Sound("Falling_putter.ogg")
-# collision_sound = pygame.mixer.Sound("Collision.ogg")
+collision_sound = pygame.mixer.Sound("media/Collision.ogg")
 
 # Set the base volume for all sounds
-# move_up_sound.set_volume(0.5)
-# move_down_sound.set_volume(0.5)
 # collision_sound.set_volume(0.5)
 
 # At this point, we're done, so we can stop and quit the mixer
-# pygame.mixer.music.stop()
-# pygame.mixer.quit()
+pygame.mixer.music.stop()
+pygame.mixer.quit()
+
 bullets = pygame.sprite.Group()
 clouds = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
@@ -250,23 +218,8 @@ def start_the_game():
             elif event.type == QUIT:
                 running = False
 
-        # # Should we add a new Bullet?
-        # elif event.type == ADDBullet:
-        #     # Create the new Bullet, and add it to our sprite groups
-        #     new_Bullet = Bullet()
-        #     bullets.add(new_Bullet)
-        #     all_sprites.add(new_Bullet)
-
-        # # Should we add a new cloud?
-        # elif event.type == ADDCLOUD:
-        #     # Create the new cloud, and add it to our sprite groups
-        #     new_cloud = Cloud()
-        #     clouds.add(new_cloud)
-        #     all_sprites.add(new_cloud)
-
         # Get the set of keys pressed and check for user input
         pressed_keys = pygame.key.get_pressed()
-        print(pressed_keys)
         player.update(pressed_keys)
 
         # Update the position of our bullets and clouds
@@ -274,7 +227,7 @@ def start_the_game():
         clouds.update()
 
         # Fill the screen with sky blue
-        screen.fill((135, 206, 250))
+        screen.fill((42, 254, 69))
 
         # Draw all our sprites
         for entity in all_sprites:
@@ -316,7 +269,8 @@ def create_menu_join():
     join_menu = pygame_menu.Menu(
         height=WINDOW_SIZE[0],
         title='Play Menu',
-        width=WINDOW_SIZE[1]
+        width=WINDOW_SIZE[1],
+        theme=pygame_menu.themes.THEME_BLUE
     )
 
     join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
@@ -335,10 +289,10 @@ def update_join_status(code):
         join_status = 'Insert room key...'
     else:
         try:
-            join_status = 'Key looking okej'
+            join_status = 'Key looking okey!'
             join_room(code)
         except:
-            join_status = 'Joining fail'
+            join_status = 'Joining fail :('
 
 
 def join_room(code):
@@ -355,13 +309,12 @@ def draw_update_function_join_status_button(widget, menu):
 
 
 def create_menu_about():
-    about_theme = pygame_menu.themes.THEME_DEFAULT.copy()
-    about_theme.widget_margin = (0, 0)
+
     about_menu = pygame_menu.Menu(
         height=WINDOW_SIZE[0],
-        theme=about_theme,
         title='About',
-        width=WINDOW_SIZE[1]
+        width=WINDOW_SIZE[1],
+        theme=pygame_menu.themes.THEME_BLUE
     )
 
     for m in ABOUT:
@@ -375,6 +328,7 @@ def create_menu_about():
 def check_name(value):
     global USER_NAME
     USER_NAME = value
+    # TODO - Update pliku / serializacja
 
 
 def host_game():

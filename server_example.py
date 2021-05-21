@@ -3,12 +3,16 @@
 
 import socket
 import select
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.bind(('', 8881))
-sock.listen(5)
+
+
+MAIN_SERVER_SOCKET_PORT = 8881
+
+main_server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+main_server_socket.bind(('', MAIN_SERVER_SOCKET_PORT))
+main_server_socket.listen(5)
 
 # lists of sockets to watch for input and output events
-ins = [sock]
+ins = [main_server_socket]
 ous = []
 # mapping socket -> data to send on that socket when feasible
 data = {}
@@ -25,9 +29,9 @@ try:
     while True:
         i, o, e = select.select(ins, ous, [])  # no excepts nor timeout
         for x in i:
-            if x is sock:
+            if x is main_server_socket:
                 # input event on sock means client trying to connect
-                newSocket, address = sock.accept(  )
+                newSocket, address = main_server_socket.accept()
                 print("Connected from", address)
                 ins.append(newSocket)
                 adrs[newSocket] = address

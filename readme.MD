@@ -71,5 +71,7 @@ Rodzaje wiadmości:
 - ```python server.py```
 - ```python client.py```
 
-
+## TODO na teraz
+- [ ] Zapisywanie zmiennych (Klucz, username) do pliku (serializacja) pickle/json
+- [ ] 
 
