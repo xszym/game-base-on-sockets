@@ -39,7 +39,7 @@ from pygame.locals import (
 
 ABOUT = ['Authors: Dorota i Szymon',
          'PAS 2021']
-
+MENU_THEME = pygame_menu.themes.THEME_DARK
 
 # Define constants for the screen width and height
 SCREEN_WIDTH = 640
@@ -256,7 +256,7 @@ def start_the_game():
 def create_menu_main():
     join_menu = create_menu_join()
     about_menu = create_menu_about()
-    main_menu = pygame_menu.Menu('PAS 2021 - CS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=pygame_menu.themes.THEME_BLUE)
+    main_menu = pygame_menu.Menu('PAS 2021 - CS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=MENU_THEME)
     main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=10, onchange=check_name)
     main_menu.add.button('Host Game', host_game)
     main_menu.add.button('Join game', join_menu)#  maxchar=4, onreturn=)
@@ -270,7 +270,7 @@ def create_menu_join():
         height=WINDOW_SIZE[0],
         title='Play Menu',
         width=WINDOW_SIZE[1],
-        theme=pygame_menu.themes.THEME_BLUE
+        theme=MENU_THEME
     )
 
     join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
@@ -314,7 +314,7 @@ def create_menu_about():
         height=WINDOW_SIZE[0],
         title='About',
         width=WINDOW_SIZE[1],
-        theme=pygame_menu.themes.THEME_BLUE
+        theme=MENU_THEME
     )
 
     for m in ABOUT:
