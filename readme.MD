@@ -40,7 +40,16 @@ Dołączenie. (same napisy)
 - [ ] otrzymuje ile osób jest w pokóju
 - [ ] ma napis czekanie na hosta
 
+
+
 ## Komunikacja
+### Example
+Auth:None\n\r
+Command:Register\n\r
+Status:SUCC\n\r
+Lenght:123\n\r\n\r
+<len o długości 123>\n\r\n\r
+
 Rodzaje wiadmości:
  - [ ] REGISTER, (login)
      - SUCC, key
@@ -74,4 +83,9 @@ Rodzaje wiadmości:
 ## TODO na teraz
 - [ ] Zapisywanie zmiennych (Klucz, username) do pliku (serializacja) pickle/json
 - [ ] 
+
+
+## Links 
+https://gamedev.stackexchange.com/questions/20425/game-logic-on-the-server-good-or-bad
+
 

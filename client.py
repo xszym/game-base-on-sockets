@@ -9,6 +9,7 @@ from tkinter import *
 from tkinter import messagebox
 Tk().wm_withdraw() #to hide the main window
 
+import json
 
 def show_popup(msg):
     messagebox.showinfo(msg,'OK')
@@ -21,6 +22,8 @@ import math
 # Import random for random numbers
 import random
 
+
+import pickle
 # Import pygame.locals for easier access to key coordinates
 # Updated to conform to flake8 and black standards
 # from pygame.locals import *
@@ -51,12 +54,18 @@ USER_NAME = "ProKiller"
 # Define the Player object extending pygame.sprite.Sprite
 # Instead of a surface, we use an image for a better looking sprite
 class Player(pygame.sprite.Sprite):
-    def __init__(self, name):
+    def __init__(self, name, x, y, angle):
         super(Player, self).__init__()
         self.surf = pygame.image.load("media/player.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
-        self.rect = self.surf.get_rect()
-        self.angle = 90
+        self.rect = self.surf.get_rect(
+            center=(
+                x,
+                y,
+            )
+        )
+        self.angle = angle
+        self.surf = pygame.transform.rotate(self.surf, angle-90)
 
         self.font = pygame.font.SysFont("Arial", 10)
         self.textSurf = self.font.render(name, 1, pygame.Color('white'))
@@ -66,49 +75,6 @@ class Player(pygame.sprite.Sprite):
         H = self.textSurf.get_height()
         self.surf.blit(self.textSurf, [self.rect.width/2 - W/2, self.rect.height/4 - H/2]) # 
         self.surf.blit(self.textSurfRotated, [self.rect.width/2 - W/2, self.rect.height*3/4 - H/2]) # 
-
-    def rotate_to_angle(self, _angle):
-        if _angle != self.angle:
-            angle_delta = _angle - self.angle
-            self.surf = pygame.transform.rotate(self.surf, angle_delta)
-            self.angle = _angle
-
-    # Move the sprite based on keypresses
-    def update(self, pressed_keys):
-        if pressed_keys[K_UP]:
-            self.rotate_to_angle(180)
-            self.rect.move_ip(0, -5)
-        elif pressed_keys[K_DOWN]:
-            self.rotate_to_angle(0)
-            self.rect.move_ip(0, 5)
-        elif pressed_keys[K_LEFT]:
-            self.rotate_to_angle(270)
-            self.rect.move_ip(-5, 0)
-        elif pressed_keys[K_RIGHT]:
-            self.rotate_to_angle(90)
-            self.rect.move_ip(5, 0)
-
-        if pressed_keys[K_SPACE]:
-            if self.angle == 0:
-                new_Bullet = Bullet(self.rect.centerx+5,self.rect.bottom-5, self.angle)
-            elif self.angle == 90:
-                new_Bullet = Bullet(self.rect.right, self.rect.centery, self.angle)
-            elif self.angle == 180:
-                new_Bullet = Bullet(self.rect.centerx+5, self.rect.top-5, self.angle)
-            elif self.angle == 270:
-                new_Bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
-            bullets.add(new_Bullet)
-            all_sprites.add(new_Bullet)
-
-        # Keep player on the screen
-        if self.rect.left < 0:
-            self.rect.left = 0
-        elif self.rect.right > SCREEN_WIDTH:
-            self.rect.right = SCREEN_WIDTH
-        if self.rect.top <= 0:
-            self.rect.top = 0
-        elif self.rect.bottom >= SCREEN_HEIGHT:
-            self.rect.bottom = SCREEN_HEIGHT
 
 
 # Define the Bullet object extending pygame.sprite.Sprite
@@ -129,27 +95,45 @@ class Bullet(pygame.sprite.Sprite):
         self.surf = pygame.transform.rotate(self.surf, angle+90)
         self.angle = angle
 
-    # Move the Bullet based on speed
-    # Remove it when it passes the left edge of the screen
-    def update(self):
-        if self.angle == 0:
-            self.rect.move_ip(0, self.speed)
-        elif self.angle == 90:
-            self.rect.move_ip(self.speed, 0)
-        elif self.angle == 180:
-            self.rect.move_ip(0, -self.speed)
-        elif self.angle == 270:
-            self.rect.move_ip(-self.speed, 0)
 
-        if self.rect.left < 0:
-            self.kill()
-        elif self.rect.right > SCREEN_WIDTH:
-            self.kill()
-        if self.rect.top <= 0:
-            self.kill()
-        elif self.rect.bottom >= SCREEN_HEIGHT:
-            self.kill()
+import asyncio
+import websockets
+import threading
 
+pressed_keys = None
+PLAYER_POSITIONS = None
+async def serve_client():
+    uri = "ws://localhost:8881"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            global pressed_keys
+            if pressed_keys is not None:
+                # print(pressed_keys)
+                # buttons = str(pressed_keys).split("(")[1].split(")")[0]
+                # print(str(pressed_keys[:10]))
+                # print("Not None")
+                my_pickled_object = pickle.dumps(pressed_keys)
+                await websocket.send(my_pickled_object)
+            else:
+                print("None")
+                await websocket.send(str("None"))
+
+            recived_from_server = await websocket.recv()
+            if recived_from_server is not 'None':
+                global PLAYER_POSITIONS
+                PLAYER_POSITIONS = recived_from_server # pickle.loads(recived_from_server)
+                # print(name)
+
+            delay = 30.0/1000.0
+            await asyncio.sleep(delay)
+
+def start_loop():
+    new_loop = asyncio.new_event_loop()
+    new_loop.run_until_complete(serve_client())
+    # loop.run_forever()
+
+t = threading.Thread(target=start_loop)
+t.start()
 
 # Setup for sounds, defaults are good
 pygame.mixer.init()
@@ -171,14 +155,14 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 # pygame.mixer.music.play(loops=-1)
 
 # Load all our sound files
-collision_sound = pygame.mixer.Sound("media/Collision.ogg")
+# collision_sound = pygame.mixer.Sound("media/Collision.ogg")
 
 # Set the base volume for all sounds
 # collision_sound.set_volume(0.5)
 
 # At this point, we're done, so we can stop and quit the mixer
-pygame.mixer.music.stop()
-pygame.mixer.quit()
+# pygame.mixer.music.stop()
+# pygame.mixer.quit()
 
 bullets = pygame.sprite.Group()
 clouds = pygame.sprite.Group()
@@ -189,7 +173,7 @@ def start_the_game():
     running = True
 
     # Create our 'player'
-    player = Player(USER_NAME)
+    # player = Player(USER_NAME)
 
     # Create groups to hold Bullet sprites, cloud sprites, and all sprites
     # - bullets is used for collision detection and position updates
@@ -199,10 +183,10 @@ def start_the_game():
     global clouds
     global all_sprites
 
-    bullets = pygame.sprite.Group()
-    clouds = pygame.sprite.Group()
-    all_sprites = pygame.sprite.Group()
-    all_sprites.add(player)
+    # bullets = pygame.sprite.Group()
+    # clouds = pygame.sprite.Group()
+    # all_sprites = pygame.sprite.Group()
+    # all_sprites.add(player)
 
     # Our main loop
     while running:
@@ -219,19 +203,35 @@ def start_the_game():
                 running = False
 
         # Get the set of keys pressed and check for user input
+        global pressed_keys
         pressed_keys = pygame.key.get_pressed()
-        player.update(pressed_keys)
+        # player.update(pressed_keys)
+
 
         # Update the position of our bullets and clouds
-        bullets.update()
-        clouds.update()
+        # bullets.update()
+        # clouds.update()
 
         # Fill the screen with sky blue
-        screen.fill((42, 254, 69))
+        screen.fill((55, 90, 55))
 
         # Draw all our sprites
-        for entity in all_sprites:
-            screen.blit(entity.surf, entity.rect)
+        global PLAYER_POSITIONS
+        if PLAYER_POSITIONS is not None:
+            recived_objects = json.loads(PLAYER_POSITIONS)
+            for recived_object in recived_objects:
+                print(recived_object)
+                if recived_object['type'] == 'bullet':
+                    entity = Bullet(recived_object['centerx'], 
+                                    recived_object['centery'], 
+                                    recived_object['angle'])
+                    screen.blit(entity.surf, entity.rect)
+                elif recived_object['type'] == 'player':
+                    entity = Player(recived_object['nickname'], 
+                                    recived_object['centerx'], 
+                                    recived_object['centery'], 
+                                    recived_object['angle'])
+                    screen.blit(entity.surf, entity.rect)
 
         # Check if any bullets have collided with the player
         # if pygame.sprite.spritecollideany(player, bullets):
