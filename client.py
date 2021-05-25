@@ -4,25 +4,22 @@ import pygame
 # Import menu to pygame
 import pygame_menu
 
+import asyncio
+import websockets
+import threading
+
 # dialog box
 from tkinter import *
 from tkinter import messagebox
 Tk().wm_withdraw() #to hide the main window
 
 import json
-
-def show_popup(msg):
-    messagebox.showinfo(msg,'OK')
-
-
 import logging
 logging.basicConfig(level=logging.INFO)
 
 import math
 # Import random for random numbers
 import random
-
-
 import pickle
 # Import pygame.locals for easier access to key coordinates
 # Updated to conform to flake8 and black standards
@@ -39,66 +36,13 @@ from pygame.locals import (
     QUIT,
 )
 
-
-ABOUT = ['Authors: Dorota i Szymon',
-         'PAS 2021']
-MENU_THEME = pygame_menu.themes.THEME_DARK
-
-# Define constants for the screen width and height
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 480
-WINDOW_SIZE = (SCREEN_HEIGHT, SCREEN_WIDTH)
-USER_NAME = "ProKiller"
+from game_config import *
+from game_classes import Player, Bullet
 
 
-# Define the Player object extending pygame.sprite.Sprite
-# Instead of a surface, we use an image for a better looking sprite
-class Player(pygame.sprite.Sprite):
-    def __init__(self, name, x, y, angle):
-        super(Player, self).__init__()
-        self.surf = pygame.image.load("media/player.png").convert()
-        self.surf.set_colorkey((255, 255, 255), RLEACCEL)
-        self.rect = self.surf.get_rect(
-            center=(
-                x,
-                y,
-            )
-        )
-        self.angle = angle
-        self.surf = pygame.transform.rotate(self.surf, angle-90)
+def show_popup(msg):
+    messagebox.showinfo(msg,'OK')
 
-        self.font = pygame.font.SysFont("Arial", 10)
-        self.textSurf = self.font.render(name, 1, pygame.Color('white'))
-        self.textSurfRotated = pygame.transform.rotate(self.textSurf, 180)
-
-        W = self.textSurf.get_width()
-        H = self.textSurf.get_height()
-        self.surf.blit(self.textSurf, [self.rect.width/2 - W/2, self.rect.height/4 - H/2]) # 
-        self.surf.blit(self.textSurfRotated, [self.rect.width/2 - W/2, self.rect.height*3/4 - H/2]) # 
-
-
-# Define the Bullet object extending pygame.sprite.Sprite
-# Instead of a surface, we use an image for a better looking sprite
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, angle):
-        super(Bullet, self).__init__()
-        self.surf = pygame.image.load("media/missile.png").convert()
-        self.surf.set_colorkey((255, 255, 255), RLEACCEL)
-        # The starting position is randomly generated, as is the speed
-        self.rect = self.surf.get_rect(
-            center=(
-                x,
-                y,
-            )
-        )
-        self.speed = 17
-        self.surf = pygame.transform.rotate(self.surf, angle+90)
-        self.angle = angle
-
-
-import asyncio
-import websockets
-import threading
 
 pressed_keys = None
 PLAYER_POSITIONS = None
@@ -108,21 +52,15 @@ async def serve_client():
         while True:
             global pressed_keys
             if pressed_keys is not None:
-                # print(pressed_keys)
-                # buttons = str(pressed_keys).split("(")[1].split(")")[0]
-                # print(str(pressed_keys[:10]))
-                # print("Not None")
                 my_pickled_object = pickle.dumps(pressed_keys)
                 await websocket.send(my_pickled_object)
             else:
-                print("None")
                 await websocket.send(str("None"))
 
             recived_from_server = await websocket.recv()
             if recived_from_server is not 'None':
                 global PLAYER_POSITIONS
-                PLAYER_POSITIONS = recived_from_server # pickle.loads(recived_from_server)
-                # print(name)
+                PLAYER_POSITIONS = recived_from_server
 
             delay = 30.0/1000.0
             await asyncio.sleep(delay)
@@ -130,22 +68,14 @@ async def serve_client():
 def start_loop():
     new_loop = asyncio.new_event_loop()
     new_loop.run_until_complete(serve_client())
-    # loop.run_forever()
 
 t = threading.Thread(target=start_loop)
 t.start()
 
-# Setup for sounds, defaults are good
+
 pygame.mixer.init()
-
-# Initialize pygame
 pygame.init()
-
-# Setup the clock for a decent framerate
 clock = pygame.time.Clock()
-
-# Create the screen object
-# The size is determined by the constant SCREEN_WIDTH and SCREEN_HEIGHT
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 # Load and play our background music
@@ -154,68 +84,36 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 # pygame.mixer.music.load("media/Apoxode_-_Electric_1.mp3")
 # pygame.mixer.music.play(loops=-1)
 
-# Load all our sound files
 # collision_sound = pygame.mixer.Sound("media/Collision.ogg")
-
-# Set the base volume for all sounds
 # collision_sound.set_volume(0.5)
 
-# At this point, we're done, so we can stop and quit the mixer
 # pygame.mixer.music.stop()
 # pygame.mixer.quit()
 
 bullets = pygame.sprite.Group()
 clouds = pygame.sprite.Group()
-all_sprites = pygame.sprite.Group()
 
 def start_the_game():
-    # Variable to keep our main loop running
     running = True
 
-    # Create our 'player'
-    # player = Player(USER_NAME)
-
-    # Create groups to hold Bullet sprites, cloud sprites, and all sprites
-    # - bullets is used for collision detection and position updates
-    # - clouds is used for position updates
-    # - all_sprites isused for rendering
     global bullets
     global clouds
     global all_sprites
+    global pressed_keys
 
-    # bullets = pygame.sprite.Group()
-    # clouds = pygame.sprite.Group()
-    # all_sprites = pygame.sprite.Group()
-    # all_sprites.add(player)
-
-    # Our main loop
     while running:
-    # Look at every event in the queue
         for event in pygame.event.get():
-            # Did the user hit a key?
             if event.type == KEYDOWN:
-                # Was it the Escape key? If so, stop the loop
                 if event.key == K_ESCAPE:
                     running = False
 
-            # Did the user click the window close button? If so, stop the loop
             elif event.type == QUIT:
                 running = False
 
-        # Get the set of keys pressed and check for user input
-        global pressed_keys
         pressed_keys = pygame.key.get_pressed()
-        # player.update(pressed_keys)
 
+        screen.fill(GAME_BG)
 
-        # Update the position of our bullets and clouds
-        # bullets.update()
-        # clouds.update()
-
-        # Fill the screen with sky blue
-        screen.fill((55, 90, 55))
-
-        # Draw all our sprites
         global PLAYER_POSITIONS
         if PLAYER_POSITIONS is not None:
             recived_objects = json.loads(PLAYER_POSITIONS)
@@ -233,23 +131,7 @@ def start_the_game():
                                     recived_object['angle'])
                     screen.blit(entity.surf, entity.rect)
 
-        # Check if any bullets have collided with the player
-        # if pygame.sprite.spritecollideany(player, bullets):
-        #     # If so, remove the player
-        #     player.kill()
-
-        #     # Stop any moving sounds and play the collision sound
-        #     # move_up_sound.stop()
-        #     # move_down_sound.stop()
-        #     # collision_sound.play()
-
-        #     # Stop the loop
-        #     running = False
-
-        # Flip everything to the display
         pygame.display.flip()
-
-        # Ensure we maintain a 30 frames per second rate
         clock.tick(30)
 
 

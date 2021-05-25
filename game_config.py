@@ -1,0 +1,15 @@
+import pygame_menu
+
+ABOUT = ['Authors: Dorota i Szymon',
+         'PAS 2021']
+MENU_THEME = pygame_menu.themes.THEME_DARK
+
+SCREEN_WIDTH = 640
+SCREEN_HEIGHT = 480
+WINDOW_SIZE = (SCREEN_HEIGHT, SCREEN_WIDTH)
+USER_NAME = "ProKiller"
+
+PLAYER_DEFAULT_SPEED = 5
+BULLET_DEFAULT_SPEED = 17
+
+GAME_BG = (55, 90, 55)
