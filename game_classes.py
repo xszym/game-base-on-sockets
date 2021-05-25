@@ -53,7 +53,7 @@ class Player(pygame.sprite.Sprite):
         elif pressed_keys[K_DOWN]:
             self.rotate_to_angle(0)
             self.rect.move_ip(0, self.speed)
-        elif pressed_keys[K_LEFT]:
+        if pressed_keys[K_LEFT]:
             self.rotate_to_angle(270)
             self.rect.move_ip(-self.speed, 0)
         elif pressed_keys[K_RIGHT]:
@@ -62,11 +62,11 @@ class Player(pygame.sprite.Sprite):
 
         if pressed_keys[K_SPACE]:
             if self.angle == 0:
-                new_Bullet = Bullet(self.rect.centerx+5,self.rect.bottom-5, self.angle)
+                new_Bullet = Bullet(self.rect.centerx+BULLET_FROM_PLAYER_OFFSET,self.rect.bottom-BULLET_FROM_PLAYER_OFFSET, self.angle)
             elif self.angle == 90:
                 new_Bullet = Bullet(self.rect.right, self.rect.centery, self.angle)
             elif self.angle == 180:
-                new_Bullet = Bullet(self.rect.centerx+5, self.rect.top-5, self.angle)
+                new_Bullet = Bullet(self.rect.centerx+BULLET_FROM_PLAYER_OFFSET, self.rect.top-BULLET_FROM_PLAYER_OFFSET, self.angle)
             elif self.angle == 270:
                 new_Bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
             bullets.add(new_Bullet)

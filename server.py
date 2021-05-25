@@ -4,7 +4,6 @@ import pygame
 # Import menu to pygame
 import pygame_menu
 
-
 import math
 import random
 import string
@@ -34,7 +33,6 @@ from pygame.locals import (
 from game_config import *
 from game_classes import Player, Bullet
 
-
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
@@ -42,6 +40,7 @@ def current_milliseconds():
 	return round(time() * 1000)
 
 
+##################################################33
 PLAYER_INPUT = None
 PLAYER_POSITIONS = None
 async def serve_server(websocket, path):
@@ -61,26 +60,69 @@ async def serve_server(websocket, path):
             await websocket.send('None')
 
 
-new_loop = asyncio.new_event_loop()
-start_server = websockets.serve(
-	serve_server,
-	'0.0.0.0',
-	int(8881),
-    loop=new_loop
-)
-
 def start_loop(loop, server):
     loop.run_until_complete(server)
     loop.run_forever()
 
-t = threading.Thread(target=start_loop, args=(new_loop, start_server))
-t.start()
+
+def start_player_communication_threads():
+    new_loop = asyncio.new_event_loop()
+    start_server = websockets.serve(
+        serve_server,
+        '0.0.0.0',
+        int(8881),
+        loop=new_loop
+    )
+    t = threading.Thread(target=start_loop, args=(new_loop, start_server))
+    t.start()
+    
+start_player_communication_threads()
+##################################################33
+
+# TODO - python queue with one element
+def recv_from_player_socket(_socket, _queue):
+    while True:
+        # TODO - data = socket.recv()
+        out_q.put(data)
+
+
+def send_to_player_socket(_socket, _queue):
+    while True:
+        data = _queue.get()
+        # TODO - socket.send(data)
+
+
+class PlayerProfil():
+    def __init__(self, nickname):
+        self.nickname = nickname
+        self.secret_key = '1234'
+        self.socket_port = '1234'
+        self.socket = '1234'
+
+        self.recv_from_queue = Queue()
+        self.send_to_queue = Queue()
+
+        self.recv_from_thread = threading.Thread(target=recv_from_player_socket, args=(self.socket, self.recv_from_queue, ))
+        self.send_to_thread = threading.Thread(target=send_to_player_socket, args=(self.socket, self.send_to_queue, ))
+
+        self.player_game_object = Player(self.nickname, 10, 10, 0)
+
+        self.player_input = None
+    
+    def update(self):
+        # TODO
+        self.player_input = self.recv_from_queue.get()
+
+    def __del__(self):
+        self.recv_thread.stop()
+        self.send_thread.stop()
 
 
 class TankGame():
     def __init__(self):
         self.join_code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
         self.port = 6789
+        self.connected_players = {}
 
     def start_game(self):
         pass
@@ -119,13 +161,13 @@ def start_the_game():
     players = pygame.sprite.Group()
 
     tank_game = TankGame()
-
+    tank_game.connected_players['api_key'] = PlayerProfil("nickname")
     player = Player(USER_NAME, 10, 10, 0)
     players.add(player)
 
     running = True
     while running:
-        for player in players:
+        for player in players: # tank_game.connected_players.items():
             global PLAYER_INPUT
             pressed_keys = PLAYER_INPUT
             if PLAYER_INPUT != None:
@@ -145,4 +187,3 @@ def start_the_game():
 if __name__ == '__main__':
     game_threat = threading.Thread(target = start_the_game)
     game_threat.start()
-    # start_the_game()
