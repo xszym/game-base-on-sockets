@@ -5,10 +5,11 @@ import pygame
 import pygame_menu
 
 import asyncio
-import websockets
+# import websockets
 import threading
+import socket
 from queue import Queue
-
+from time import sleep
 # dialog box
 from tkinter import *
 from tkinter import messagebox
@@ -39,72 +40,31 @@ from pygame.locals import (
 
 from config import *
 from game_classes import Player, Bullet
-# from utils import recv_from_socket_from_queue, send_to_socket_from_queue
+from utils import prepare_message, recv_msg_from_socket
 
 
 def show_popup(msg):
     messagebox.showinfo(msg,'OK')
 
 
-##########################################################
-pressed_keys = None
-PLAYER_POSITIONS = None
-async def serve_client():
-    uri = "ws://localhost:8881"
-    async with websockets.connect(uri) as websocket:
-        while True:
-            global pressed_keys
-            if pressed_keys is not None:
-                my_pickled_object = pickle.dumps(pressed_keys)
-                await websocket.send(my_pickled_object)
-            else:
-                await websocket.send(str("None"))
+def recv_from_socket_from_queue(_socket, _queue):
+    while True:
+        headers, data = recv_msg_from_socket(_socket)
+        # print("GAME DATA:", headers, data)
+        _queue.put([headers, data])
+        sleep(1/30)
 
-            recived_from_server = await websocket.recv()
-            if recived_from_server is not 'None':
-                global PLAYER_POSITIONS
-                PLAYER_POSITIONS = recived_from_server
+def send_to_socket_from_queue(_socket, _queue):
+    while True:
+        newest_data = _queue.get()
+        while not _queue.empty():
+            newest_data = _queue.get()
+        if newest_data:
+            _socket.send(newest_data)
+        sleep(1/15)
 
-            # delay = 30.0/1000.0
-            # await asyncio.sleep(delay)
-
-def start_loop():
-    new_loop = asyncio.new_event_loop()
-    new_loop.run_until_complete(serve_client())
-
-# t = threading.Thread(target=start_loop)
-# t.start()
-##########################################################
-
-async def send_to_server(_queue):
-    uri = "ws://localhost:8881"
-    async with websockets.connect(uri) as websocket:
-        while True:
-            if _queue.empty():
-                await websocket.send('None')
-            else:
-                data = _queue.get()
-                print("sending...")#, data)
-                await websocket.send(data)
-
-async def recv_from_server(_queue):
-    uri = "ws://localhost:8881"
-    async with websockets.connect(uri) as websocket:
-        while True:
-            recived_from_server = await websocket.recv()
-            if recived_from_server != None:
-                print("recived...", recived_from_server)
-                _queue.put(recived_from_server)
-
-
-def recv_from_server_loop(_queue):
-    new_loop = asyncio.new_event_loop()
-    new_loop.run_until_complete(recv_from_server(_queue))
-
-
-def send_to_server_loop(_queue):
-    new_loop = asyncio.new_event_loop()
-    new_loop.run_until_complete(send_to_server(_queue))
+MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
 
 
 pygame.mixer.init()
@@ -143,13 +103,15 @@ def deserialize_game_objects(msg):
     return entities
 
 
-def start_the_game():
+def start_the_game(port):
     running = True
+    game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    game_socket.connect((SERVER_IP, port))
 
     recv_from_queue = Queue()
     send_to_queue = Queue()
-    recv_from_thread = threading.Thread(target=recv_from_server_loop, args=(recv_from_queue, ))
-    send_to_thread = threading.Thread(target=send_to_server_loop, args=(send_to_queue, ))
+    recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(game_socket, recv_from_queue, ))
+    send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(game_socket, send_to_queue, ))
     recv_from_thread.start()
     send_to_thread.start()
 
@@ -158,25 +120,28 @@ def start_the_game():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     running = False
-
             elif event.type == QUIT:
                 running = False
 
         pressed_keys = pygame.key.get_pressed()
-        my_pickled_object = pickle.dumps(pressed_keys)
-        send_to_queue.put(my_pickled_object)
+        dumped_pressed_keys = json.dumps(pressed_keys)
+        
+        msg = prepare_message(command='UPDATE_GAME',data=dumped_pressed_keys)
+        send_to_queue.put(msg)
 
         screen.fill(GAME_BG)
-
+        
         PLAYER_POSITIONS = None
         if not recv_from_queue.empty():
-            PLAYER_POSITIONS = recv_from_queue.put()
-            if PLAYER_POSITIONS != 'None':
-                if PLAYER_POSITIONS is not None:
-                    entities = deserialize_game_objects(PLAYER_POSITIONS)
-                    for entity in entities:
-                        screen.blit(entity.surf, entity.rect)
-
+            MSG_FROM_SERVER = recv_from_queue.get()
+            while not MSG_FROM_SERVER:
+                MSG_FROM_SERVER = recv_from_queue.get()
+            PLAYER_POSITIONS = MSG_FROM_SERVER[1]
+            if PLAYER_POSITIONS is not None:
+                entities = deserialize_game_objects(PLAYER_POSITIONS)
+                for entity in entities:
+                    screen.blit(entity.surf, entity.rect)
+        
         pygame.display.flip()
         clock.tick(30)
 
@@ -224,11 +189,16 @@ def update_join_status(code):
 
 
 def join_room(code):
-    try:
-        logging.info('TODO - próba dołączenia do  room')
-    except:
-        show_popup("Error")
-    return
+    # try:
+    mess = prepare_message(command='JOIN_CHANNEL',data='9Z1D')
+    MAIN_SERVER_SOCKET.sendall(mess)
+    headers, port = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    start_the_game(int(port))
+
+    logging.info('TODO - próba dołączenia do  room')
+    # except:
+    #     show_popup("Error")
+    # return
 
 
 def draw_update_function_join_status_button(widget, menu):
@@ -237,7 +207,6 @@ def draw_update_function_join_status_button(widget, menu):
 
 
 def create_menu_about():
-
     about_menu = pygame_menu.Menu(
         height=WINDOW_SIZE[0],
         title='About',
@@ -260,9 +229,13 @@ def check_name(value):
 
 
 def host_game():
-    start_the_game()
+    mess = prepare_message(command='START_CHANNEL',auth='')
+    MAIN_SERVER_SOCKET.sendall(mess)
+    headers, code = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    join_room(code)
+    # start_the_game()
     # messagebox.showinfo('Continue','OK')
-    return
+    # return
 
 
 if __name__ == '__main__':

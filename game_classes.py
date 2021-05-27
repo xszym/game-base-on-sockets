@@ -5,15 +5,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from pygame.locals import (
-    RLEACCEL,
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
-    K_ESCAPE,
-    K_SPACE,
-    KEYDOWN,
-    QUIT,
+    RLEACCEL
 )
 
 from config import *

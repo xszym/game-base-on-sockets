@@ -89,3 +89,14 @@ Rodzaje wiadmości:
 https://gamedev.stackexchange.com/questions/20425/game-logic-on-the-server-good-or-bad
 
 
+## Encrypt 
+https://stackoverflow.com/questions/27287306/sending-encrypted-strings-using-socket-in-python
+
+https://riptutorial.com/python/topic/8710/sockets-and-message-encryption-decryption-between-client-and-server
+
+https://hub.packtpub.com/protect-tcp-tunnel-implementing-aes-encryption-with-python/
+
+https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256
+
+
+!@# Stancja123

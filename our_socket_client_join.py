@@ -18,7 +18,6 @@ try:
         # print("Recived", headers, data)
 
         mess = prepare_message(command='JOIN_CHANNEL',data='9Z1D')
-        # print('I send: ' + mess.decode('utf-8').strip())
         s.sendall(mess)
 
         headers, data = recv_msg_from_socket(s)

@@ -13,7 +13,7 @@ import asyncio
 import threading
 import websockets
 import pickle
-from time import time
+from time import time, sleep
 import uuid
 import os
 import json
@@ -35,38 +35,28 @@ from pygame.locals import (
 
 from config import *
 from game_classes import Player, Bullet
-from utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket
+from utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
 AVAILABLE_GAMES = {}
 
 
-# TODO - python queue with one element
 def recv_from_socket_from_queue(_socket, _queue):
     while True:
-        # TODO - data = socket.recv() / Change
         headers, data = recv_msg_from_socket(_socket)
-        print("GAME DATA:", headers, data)
-        _queue.put(data)
-        # if recived_msg_from_player == "None":
-        #     pass
-        # elif recived_msg_from_player != "None":
-        #     data = pickle.loads(recived_msg_from_player)
-        #     _queue.put(data)
+        _queue.put([headers, data])
+        sleep(1/15)
 
 
 def send_to_socket_from_queue(_socket, _queue):
     while True:
-        # TODO - socket.send(data) / Change
-        # _socket.send("dupa".encode('utf-8'))
-        if _queue.empty():
-            pass
-            # _socket.send('None')
-        else:
-            data = _queue.get()
-            print("send", data)
-            _socket.send(data)
+        newest_data = _queue.get()
+        while not _queue.empty():
+            newest_data = _queue.get()
+        if newest_data:
+            _socket.send(newest_data)
+        sleep(1/15)
 
 
 def get_port_of_socket(sock):
@@ -124,7 +114,6 @@ class TankGame():
         global AVAILABLE_GAMES
         AVAILABLE_GAMES[self.join_code] = self
     
-
     def send_no_of_connected_players(self):
         # TODO - Send ilosc podlaczonych graczy
         no_of_players = len(self.connected_players)
@@ -132,7 +121,6 @@ class TankGame():
         for p in self.connected_players:
             p.socket.sendall()
         
-
     def wait_for_players(self):
         while not self.is_game_started:
             client, addr = self.socket.accept()
@@ -156,6 +144,11 @@ class TankGame():
         self.socket.close()
 
 
+def decode_json_data(string):
+    msg = string[1]
+    return json.loads(msg)
+
+
 def start_the_game(host_client):
     pygame.init()
     clock = pygame.time.Clock()
@@ -165,7 +158,6 @@ def start_the_game(host_client):
     tank_game = TankGame()
     msg = prepare_message(command='START_CHANNEL',status='SUCC',data=tank_game.join_code)
     host_client.sendall(msg)
-    host_client.close()
 
     tank_game.wait_for_players()
     print("GAME STARTED")
@@ -177,10 +169,10 @@ def start_the_game(host_client):
         for key, player_profile in tank_game.connected_players.items():
             players_objects.add(player_profile.player_game_object)
             pressed_keys = None
-            # if not player_profile.recv_from_queue.empty():
-                # pressed_keys = player_profile.recv_from_queue.get()
-
+            while not player_profile.recv_from_queue.empty():
+                pressed_keys = player_profile.recv_from_queue.get()
             if pressed_keys != None:
+                pressed_keys = decode_json_data(pressed_keys)
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets)
             else:
                 pressed_keys = pygame.key.get_pressed()
@@ -196,9 +188,10 @@ def start_the_game(host_client):
 
         clock.tick(30)
 
+    del tank_game
+
 
 def get_random_uuid_for_player():
-    print(str(uuid.uuid4()))
     return str(uuid.uuid4())
 
 
@@ -206,6 +199,9 @@ def on_new_client(client):
     while True:
         headers, data = recv_msg_from_socket(client)
         command = headers.get('Command')
+
+        # TODO - Check if auth and auth correct ;) 
+
         if command == 'REGISTER':
             login = get_random_uuid_for_player()
             mess = prepare_message(command='REGISTER',status='SUCC',data=login)
@@ -215,15 +211,14 @@ def on_new_client(client):
             # mess = prepare_message(command='REGISTER',status='ERR')
 
             client.sendall(mess)
-            # print('I send: ' + mess.decode('utf-8'))
         elif command == 'START_CHANNEL':
             game_threat = threading.Thread(target=start_the_game, args=(client, ))
             game_threat.start()
-            break 
+            # break 
         elif command == 'JOIN_CHANNEL':
             global AVAILABLE_GAMES
             if data in AVAILABLE_GAMES:
-                mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=AVAILABLE_GAMES[data].port) 
+                mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[data].port)) 
                 client.sendall(mess)
             else:
                 mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
@@ -242,7 +237,11 @@ def on_new_client(client):
     #     mess = prepare_message('END GAME','SUCC','') 
     #     client.sendall(mess)
     #     print('I send: ' + mess.decode('utf-8'))
-    # client.close()
+    # 
+    # try:
+    #     client.close()
+    # except:
+    #     pass
 
 
 def main_server_loop():
