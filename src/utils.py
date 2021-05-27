@@ -3,7 +3,7 @@ import pickle
 import json
 import struct
 
-from config import *
+from src.config import *
 
 
 def convert_string_to_bytes(string):
@@ -129,3 +129,17 @@ def recv_msg_from_socket(sock):
     data = data_rec_second_part.decode('utf-8').split('\r\n\r\n')[1]
     # print('\n', "recv_msg ", headers, data.strip())
     return headers, data
+
+
+def recv_from_socket_to_pointer(_socket, value):
+    while True:
+        headers, data = recv_msg_from_socket(_socket)
+        value[0] = ([headers, data])
+
+
+def send_to_socket_from_pointer(_socket, value):
+    while True:
+        newest_data = value[0]
+        if newest_data != '':
+            _socket.send(newest_data)
+        sleep(1/30)

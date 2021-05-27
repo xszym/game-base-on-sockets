@@ -10,10 +10,6 @@ import threading
 import socket
 from queue import Queue
 from time import sleep
-# dialog box
-from tkinter import *
-from tkinter import messagebox
-Tk().wm_withdraw() #to hide the main window
 
 import json
 import logging
@@ -38,28 +34,9 @@ from pygame.locals import (
     QUIT,
 )
 
-from config import *
-from game_classes import Player, Bullet
-from utils import prepare_message, recv_msg_from_socket
-
-
-def show_popup(msg):
-    messagebox.showinfo(msg,'OK')
-
-
-def recv_from_socket_from_queue(_socket, value):
-    while True:
-        headers, data = recv_msg_from_socket(_socket)
-        value[0] = ([headers, data])
-        # sleep(1/15)
-
-
-def send_to_socket_from_queue(_socket, value):
-    while True:
-        newest_data = value[0]
-        if newest_data != '':
-            _socket.send(newest_data)
-        sleep(1/15)
+from src.config import *
+from src.game_classes import Player, Bullet
+from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to_pointer, send_to_socket_from_pointer
 
 
 MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -186,16 +163,11 @@ def update_join_status(code):
 
 
 def join_room(code):
-    # try:
     mess = prepare_message(command='JOIN_CHANNEL',data='9Z1D')
     MAIN_SERVER_SOCKET.sendall(mess)
     headers, port = recv_msg_from_socket(MAIN_SERVER_SOCKET)
     start_the_game(int(port))
-
     logging.info('TODO - próba dołączenia do  room')
-    # except:
-    #     show_popup("Error")
-    # return
 
 
 def draw_update_function_join_status_button(widget, menu):

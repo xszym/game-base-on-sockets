@@ -19,7 +19,6 @@ import os
 import json
 import logging
 logging.basicConfig(level=logging.INFO)
-# from queue import Queue
 
 from pygame.locals import (
     RLEACCEL,
@@ -33,28 +32,13 @@ from pygame.locals import (
     QUIT,
 )
 
-from config import *
-from game_classes import Player, Bullet
-from utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes
+from src.config import *
+from src.game_classes import Player, Bullet
+from src.utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes, recv_from_socket_to_pointer, send_to_socket_from_pointer
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
 AVAILABLE_GAMES = {}
-
-
-def recv_from_socket_from_queue(_socket, value):
-    while True:
-        headers, data = recv_msg_from_socket(_socket)
-        value[0] = ([headers, data])
-        # sleep(1/15)
-
-
-def send_to_socket_from_queue(_socket, value):
-    while True:
-        newest_data = value[0]
-        if newest_data != '':
-            _socket.send(newest_data)
-        sleep(1/15)
 
 
 def get_port_of_socket(sock):
@@ -89,8 +73,6 @@ class PlayerProfil():
 
     def update(self):
         pass
-        # TODO
-        # self.player_input = self.recv_from_queue.get()
 
     def __del__(self):
         self.socket.close()
@@ -130,8 +112,8 @@ class TankGame():
             
             self.connected_players[client] = new_player_profile # TODO - change key from client to auth
             print("len -> self.connected_players", len(self.connected_players))
-            if len(self.connected_players) == 4: # TODO 2
-                self.is_game_started = True # CZESC !!! Co mnie podglDądasz?DISKORD? DISKOROLKA?
+            if len(self.connected_players) == 4: # TODO - start na przycisk
+                self.is_game_started = True
             # TODO - send_no_of_connected_players(self)
             # TODO - dla hosta sprawdz czy wystartował grę :)
         self.status = "BUSY"
@@ -171,8 +153,6 @@ def start_the_game(host_client):
         
             if pressed_keys != '':
                 pressed_keys = decode_json_data(pressed_keys)
-                # pressed_keys = pressed_keys
-                # print(pressed_keys)
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets)
             else:
                 pressed_keys = pygame.key.get_pressed()
@@ -205,7 +185,6 @@ def on_new_client(client):
         if command == 'REGISTER':
             login = get_random_uuid_for_player()
             mess = prepare_message(command='REGISTER',status='SUCC',data=login)
-            # print('I send: ' + mess.decode('utf-8'))
 
             # TODO - Zpisywanie do plaintext zarejstrowanych USSID
             # mess = prepare_message(command='REGISTER',status='ERR')
@@ -214,7 +193,6 @@ def on_new_client(client):
         elif command == 'START_CHANNEL':
             game_threat = threading.Thread(target=start_the_game, args=(client, ))
             game_threat.start()
-            # break 
         elif command == 'JOIN_CHANNEL':
             global AVAILABLE_GAMES
             if data in AVAILABLE_GAMES:
@@ -226,22 +204,11 @@ def on_new_client(client):
         elif command == 'QUIT GAME':
             client.close()
             break
-
         else:
             mess = prepare_message('INVALID COMMAND','ERR','') 
             client.sendall(mess)
-            # print('I send: ' + mess.decode('utf-8'))
-
-        #------------
-    # if command == 'QUIT GAME':
-    #     mess = prepare_message('END GAME','SUCC','') 
-    #     client.sendall(mess)
-    #     print('I send: ' + mess.decode('utf-8'))
-    # 
-    # try:
-    #     client.close()
-    # except:
-    #     pass
+    
+    client.close()
 
 
 def main_server_loop():

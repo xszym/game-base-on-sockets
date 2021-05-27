@@ -8,7 +8,7 @@ from pygame.locals import (
     RLEACCEL
 )
 
-from config import *
+from src.config import *
 
 
 class Player(pygame.sprite.Sprite):
