@@ -9,7 +9,6 @@ import asyncio
 import threading
 import socket
 from queue import Queue
-from time import sleep
 
 import json
 import logging
@@ -24,12 +23,7 @@ import pickle
 # from pygame.locals import *
 from pygame.locals import (
     RLEACCEL,
-    K_UP,
-    K_DOWN,
-    K_LEFT,
-    K_RIGHT,
     K_ESCAPE,
-    K_SPACE,
     KEYDOWN,
     QUIT,
 )
@@ -41,7 +35,6 @@ from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to
 
 MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
-
 
 pygame.mixer.init()
 pygame.init()
@@ -86,8 +79,8 @@ def start_the_game(port):
 
     recv_from_last_value = ['']
     send_to_newest_value = ['']
-    recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(game_socket, recv_from_last_value, ))
-    send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(game_socket, send_to_newest_value, ))
+    recv_from_thread = threading.Thread(target=recv_from_socket_to_pointer, args=(game_socket, recv_from_last_value, ))
+    send_to_thread = threading.Thread(target=send_to_socket_from_pointer, args=(game_socket, send_to_newest_value, ))
     recv_from_thread.start()
     send_to_thread.start()
 
@@ -101,21 +94,19 @@ def start_the_game(port):
 
         pressed_keys = pygame.key.get_pressed()
         dumped_pressed_keys = json.dumps(pressed_keys)
-        
         msg = prepare_message(command='UPDATE_GAME',data=dumped_pressed_keys)
         send_to_newest_value[0] = msg
         
         screen.fill(GAME_BG)
-        
         PLAYER_POSITIONS = None
         if recv_from_last_value[0] != '':
             MSG_FROM_SERVER = recv_from_last_value[0]
+            # TODO - IF MSG GAME OVER end game
             PLAYER_POSITIONS = MSG_FROM_SERVER[1]
             if PLAYER_POSITIONS is not None:
                 entities = deserialize_game_objects(PLAYER_POSITIONS)
                 for entity in entities:
                     screen.blit(entity.surf, entity.rect)
-        
         pygame.display.flip()
         clock.tick(30)
 
@@ -142,7 +133,6 @@ def create_menu_join():
 
     join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
     join_status_button = join_menu.add.button('Status: Insert code', None)
-    # join_menu.add.button('Join room', join_room)
     join_menu.add.button('Main menu', pygame_menu.events.BACK)
     join_status_button.add_draw_callback(draw_update_function_join_status_button)
     return join_menu

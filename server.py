@@ -61,8 +61,8 @@ class PlayerProfil():
         self.recv_from_last_value = ['']
         self.send_to_newest_value = ['']
 
-        self.recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(self.socket, self.recv_from_last_value, ))
-        self.send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(self.socket, self.send_to_newest_value, ))
+        self.recv_from_thread = threading.Thread(target=recv_from_socket_to_pointer, args=(self.socket, self.recv_from_last_value, ))
+        self.send_to_thread = threading.Thread(target=send_to_socket_from_pointer, args=(self.socket, self.send_to_newest_value, ))
         self.recv_from_thread.start()
         self.send_to_thread.start()
 
@@ -112,7 +112,7 @@ class TankGame():
             
             self.connected_players[client] = new_player_profile # TODO - change key from client to auth
             print("len -> self.connected_players", len(self.connected_players))
-            if len(self.connected_players) == 4: # TODO - start na przycisk
+            if len(self.connected_players) == 1: # TODO - start na przycisk
                 self.is_game_started = True
             # TODO - send_no_of_connected_players(self)
             # TODO - dla hosta sprawdz czy wystartował grę :)
