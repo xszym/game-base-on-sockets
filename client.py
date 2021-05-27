@@ -47,21 +47,20 @@ def show_popup(msg):
     messagebox.showinfo(msg,'OK')
 
 
-def recv_from_socket_from_queue(_socket, _queue):
+def recv_from_socket_from_queue(_socket, value):
     while True:
         headers, data = recv_msg_from_socket(_socket)
-        # print("GAME DATA:", headers, data)
-        _queue.put([headers, data])
-        sleep(1/30)
+        value[0] = ([headers, data])
+        # sleep(1/15)
 
-def send_to_socket_from_queue(_socket, _queue):
+
+def send_to_socket_from_queue(_socket, value):
     while True:
-        newest_data = _queue.get()
-        while not _queue.empty():
-            newest_data = _queue.get()
-        if newest_data:
+        newest_data = value[0]
+        if newest_data != '':
             _socket.send(newest_data)
         sleep(1/15)
+
 
 MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
@@ -108,10 +107,10 @@ def start_the_game(port):
     game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     game_socket.connect((SERVER_IP, port))
 
-    recv_from_queue = Queue()
-    send_to_queue = Queue()
-    recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(game_socket, recv_from_queue, ))
-    send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(game_socket, send_to_queue, ))
+    recv_from_last_value = ['']
+    send_to_newest_value = ['']
+    recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(game_socket, recv_from_last_value, ))
+    send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(game_socket, send_to_newest_value, ))
     recv_from_thread.start()
     send_to_thread.start()
 
@@ -127,15 +126,13 @@ def start_the_game(port):
         dumped_pressed_keys = json.dumps(pressed_keys)
         
         msg = prepare_message(command='UPDATE_GAME',data=dumped_pressed_keys)
-        send_to_queue.put(msg)
-
+        send_to_newest_value[0] = msg
+        
         screen.fill(GAME_BG)
         
         PLAYER_POSITIONS = None
-        if not recv_from_queue.empty():
-            MSG_FROM_SERVER = recv_from_queue.get()
-            while not MSG_FROM_SERVER:
-                MSG_FROM_SERVER = recv_from_queue.get()
+        if recv_from_last_value[0] != '':
+            MSG_FROM_SERVER = recv_from_last_value[0]
             PLAYER_POSITIONS = MSG_FROM_SERVER[1]
             if PLAYER_POSITIONS is not None:
                 entities = deserialize_game_objects(PLAYER_POSITIONS)

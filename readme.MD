@@ -1,19 +1,19 @@
 # Tank game base on sockets
 
 ## Podstawowe założenia 
-- [ ] Jako program zaliczeniowy rozumiemy parę programów serwer i klient.
-- [ ] serwer ma możliwość obsługi wielu klientów jednocześnie.
-- [ ] W każdym z programów należy zaimplementować własny protokół
+- [x] Jako program zaliczeniowy rozumiemy parę programów serwer i klient.
+- [x] serwer ma możliwość obsługi wielu klientów jednocześnie.
+- [x] W każdym z programów należy zaimplementować własny protokół
     - [ ] dokładnie określić typ i format dozwolonych wiadomośc
 - [ ] Komendy protokołu wraz z ich parametrami, powinny być dokładnie zdefiniowanie i opisane pliku imitującym dokumentację techniczną
     - [ ] http://libgadu.net/protocol/#ch1.1
 - [ ] Należy zadbać o prawidłową obsługę błędów każdej funkcji w programie
-- [ ] W projektach nie korzystamy z gotowych bibliotek.
+- [x] W projektach nie korzystamy z gotowych bibliotek.
 - [ ] Brak któregokolwiek z plików w paczce oddanej jako program zaliczeniowy (w paczce powinien znaleźć się program klienta, program serwera, opis protokołu, opis uruchomienia programu) skutkuje brakiem zaliczenia.
 
 
 ### Uzyskanie większej liczby punktów niż 50 wymaga:
-- [ ] 1. zaimplementowania logiki, która wykorzystuje więcej niż 3 rodzaje przesyłanych wiadomości oraz  
+- [x] 1. zaimplementowania logiki, która wykorzystuje więcej niż 3 rodzaje przesyłanych wiadomości oraz  
 - [ ] 2. wykorzystania co najmniej 1 mechanizmu z poniższych:
     ~~a. synchronizacja wątków,~~
     - [ ] b. obsługa większej liczby graczy niż dwóch jednocześnie,                                      
@@ -32,14 +32,13 @@
 1. Przy pierwszym podłączeniu Klient i Serwer wymieniają się kluczami :) 
 2. Klient może stworzyć lub dołączyć do pokój (2 przyciski)
 Tworzenie: (1 napis i 1 przycisk)
-- [ ] Po kliknięciu stwórz pokój dostaje kod dołacznia do pokóju od serwara
+- [x] Po kliknięciu stwórz pokój dostaje kod dołacznia do pokóju od serwara
 - [ ] otrzymuje ile osób dołączyło 
 - [ ] Ma przycisk START GAME
 Dołączenie. (same napisy)
 - [ ] dołącza do kanały 
 - [ ] otrzymuje ile osób jest w pokóju
 - [ ] ma napis czekanie na hosta
-
 
 
 ## Komunikacja
@@ -76,13 +75,10 @@ Rodzaje wiadmości:
 ## Setup
 - ```pip install -r requirements.txt```
 
+
 ## Run
 - ```python server.py```
 - ```python client.py```
-
-## TODO na teraz
-- [ ] Zapisywanie zmiennych (Klucz, username) do pliku (serializacja) pickle/json
-- [ ] 
 
 
 ## Links 
@@ -99,4 +95,23 @@ https://hub.packtpub.com/protect-tcp-tunnel-implementing-aes-encryption-with-pyt
 https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256
 
 
-!@# Stancja123
+# TODO
+- [ ] Kolizja pomiędzy czołgami 
+- [ ] Kolizja z pociskiem
+- [ ] Życie / END GAME
+- [ ] START_GAME od hosta
+- [ ] Pokazywanie ilośći połączonych graczy
+- [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
+- [ ] Nickname wysyłać od klienta i przypisać go do playera
+- [ ] Odkomendować wiele roomów 
+- [ ] Join do serwera po Kodzie
+- [ ] Pokazywanie roomów 
+- [ ] Serwer zdarzeniowy (Spytać w poniedziałek)
+- [ ] Testy i obsługa błędów
+
+
+# Bugs
+- [ ] Jak klient się rozłącza to nie usuwa go z listy połączonych graczy (quit do menu -> wysla do serwera ze wychodzi z gry, serwer usuwa gracza z listy)
+- [ ] Możliwość sepownowania dwóch czołgów w tym samym miejscu (ekran podzielony na 4 czesci, w zaleznosci od nr gracza w innej czesci sie spawnuje) 
+
+

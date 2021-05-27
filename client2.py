@@ -12,9 +12,11 @@
 #     print ("Received:", response)
 # sock.close(  )
 
-def convert_string_to_bytes(string):
-    return _bytes       
+def convert_string_to_bytes(x):
+    x[0] = 123123     
 
 
-print(convert_string_to_bytes("b'\x78\x73\x7A\x79\x6D'"[2:-1]))
+y = [10]
+convert_string_to_bytes(y)
+print(y)
 

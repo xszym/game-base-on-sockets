@@ -19,7 +19,7 @@ import os
 import json
 import logging
 logging.basicConfig(level=logging.INFO)
-from queue import Queue
+# from queue import Queue
 
 from pygame.locals import (
     RLEACCEL,
@@ -42,19 +42,17 @@ os.environ["SDL_VIDEODRIVER"] = "dummy"
 AVAILABLE_GAMES = {}
 
 
-def recv_from_socket_from_queue(_socket, _queue):
+def recv_from_socket_from_queue(_socket, value):
     while True:
         headers, data = recv_msg_from_socket(_socket)
-        _queue.put([headers, data])
-        sleep(1/15)
+        value[0] = ([headers, data])
+        # sleep(1/15)
 
 
-def send_to_socket_from_queue(_socket, _queue):
+def send_to_socket_from_queue(_socket, value):
     while True:
-        newest_data = _queue.get()
-        while not _queue.empty():
-            newest_data = _queue.get()
-        if newest_data:
+        newest_data = value[0]
+        if newest_data != '':
             _socket.send(newest_data)
         sleep(1/15)
 
@@ -76,11 +74,11 @@ class PlayerProfil():
         self.socket = client_socket
         self.socket_port = get_port_of_socket(self.socket)
 
-        self.recv_from_queue = Queue()
-        self.send_to_queue = Queue()
+        self.recv_from_last_value = ['']
+        self.send_to_newest_value = ['']
 
-        self.recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(self.socket, self.recv_from_queue, ))
-        self.send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(self.socket, self.send_to_queue, ))
+        self.recv_from_thread = threading.Thread(target=recv_from_socket_from_queue, args=(self.socket, self.recv_from_last_value, ))
+        self.send_to_thread = threading.Thread(target=send_to_socket_from_queue, args=(self.socket, self.send_to_newest_value, ))
         self.recv_from_thread.start()
         self.send_to_thread.start()
 
@@ -132,7 +130,7 @@ class TankGame():
             
             self.connected_players[client] = new_player_profile # TODO - change key from client to auth
             print("len -> self.connected_players", len(self.connected_players))
-            if len(self.connected_players) == 2: # TODO 2
+            if len(self.connected_players) == 4: # TODO 2
                 self.is_game_started = True # CZESC !!! Co mnie podglDądasz?DISKORD? DISKOROLKA?
             # TODO - send_no_of_connected_players(self)
             # TODO - dla hosta sprawdz czy wystartował grę :)
@@ -168,11 +166,13 @@ def start_the_game(host_client):
 
         for key, player_profile in tank_game.connected_players.items():
             players_objects.add(player_profile.player_game_object)
-            pressed_keys = None
-            while not player_profile.recv_from_queue.empty():
-                pressed_keys = player_profile.recv_from_queue.get()
-            if pressed_keys != None:
+
+            pressed_keys = player_profile.recv_from_last_value[0]
+        
+            if pressed_keys != '':
                 pressed_keys = decode_json_data(pressed_keys)
+                # pressed_keys = pressed_keys
+                # print(pressed_keys)
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets)
             else:
                 pressed_keys = pygame.key.get_pressed()
@@ -184,7 +184,7 @@ def start_the_game(host_client):
         msg = prepare_message(command='UPDATE_GAME',status='SUCC',data=objects_positions)
         
         for key, player_profile in tank_game.connected_players.items():
-            player_profile.send_to_queue.put(msg)
+            player_profile.send_to_newest_value[0] = msg
 
         clock.tick(30)
 
