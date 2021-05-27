@@ -4,6 +4,7 @@ import pygame
 # Import menu to pygame
 import pygame_menu
 
+from random import randrange
 import math
 import random
 import string
@@ -38,14 +39,16 @@ from utils import serialize_game_objects, decode_msg_header, prepare_message, re
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
+AVAILABLE_GAMES = {}
+
+
 # TODO - python queue with one element
 def recv_from_socket_from_queue(_socket, _queue):
     while True:
         # TODO - data = socket.recv() / Change
-        recived_msg_from_player =  _socket.recv(RECV_BUFFOR_SIZE)
-        if len(recived_msg_from_player) > 0:
-            print("recived", recived_msg_from_player)
-        
+        headers, data = recv_msg_from_socket(_socket)
+        print("GAME DATA:", headers, data)
+        _queue.put(data)
         # if recived_msg_from_player == "None":
         #     pass
         # elif recived_msg_from_player != "None":
@@ -56,7 +59,7 @@ def recv_from_socket_from_queue(_socket, _queue):
 def send_to_socket_from_queue(_socket, _queue):
     while True:
         # TODO - socket.send(data) / Change
-        _socket.send("dupa".encode('utf-8'))
+        # _socket.send("dupa".encode('utf-8'))
         if _queue.empty():
             pass
             # _socket.send('None')
@@ -94,7 +97,7 @@ class PlayerProfil():
         self.nickname = 'Nickname'
         self.secret_key = '1234'
 
-        self.player_game_object = Player(self.nickname, 10, 10, 0)
+        self.player_game_object = Player(self.nickname, randrange(400) + 10, randrange(300) + 10, 0)
 
     def update(self):
         pass
@@ -103,24 +106,54 @@ class PlayerProfil():
 
     def __del__(self):
         self.socket.close()
+        # TODO pop from tank game 
         # self.recv_from_thread.exit()
         # self.send_to_thread.exit()
 
 
 class TankGame():
     def __init__(self):
-        # self.join_code = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
-        
+        self.join_code = '9Z1D' # TODO ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+
         self.socket = open_new_connection()
         self.connected_players = {}
         self.port = get_port_of_socket(self.socket)
         self.is_game_started = False
+        self.status = "WAITING"
 
-    def start_game(self):
-        pass
+        global AVAILABLE_GAMES
+        AVAILABLE_GAMES[self.join_code] = self
+    
 
-    def update(self):
-        pass
+    def send_no_of_connected_players(self):
+        # TODO - Send ilosc podlaczonych graczy
+        no_of_players = len(self.connected_players)
+        msg = prepare_message(command='UPDATE_CHANNEL',data=no_of_players)
+        for p in self.connected_players:
+            p.socket.sendall()
+        
+
+    def wait_for_players(self):
+        while not self.is_game_started:
+            client, addr = self.socket.accept()
+            print("Connected: " + addr[0] + " to game " + self.join_code)
+            new_player_profile = PlayerProfil(client)
+
+            if len(self.connected_players) == 0:
+                self.host_socket = new_player_profile
+            
+            self.connected_players[client] = new_player_profile # TODO - change key from client to auth
+            print("len -> self.connected_players", len(self.connected_players))
+            if len(self.connected_players) == 2: # TODO 2
+                self.is_game_started = True # CZESC !!! Co mnie podglDądasz?DISKORD? DISKOROLKA?
+            # TODO - send_no_of_connected_players(self)
+            # TODO - dla hosta sprawdz czy wystartował grę :)
+        self.status = "BUSY"
+
+    def __del__(self):
+        global AVAILABLE_GAMES
+        AVAILABLE_GAMES.pop(self.join_code)
+        self.socket.close()
 
 
 def start_the_game(host_client):
@@ -128,31 +161,24 @@ def start_the_game(host_client):
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     bullets = pygame.sprite.Group()
-    players = pygame.sprite.Group()
 
     tank_game = TankGame()
-    msg = prepare_message(command='START_CHANNEL',status='SUCC',data=tank_game.port)
+    msg = prepare_message(command='START_CHANNEL',status='SUCC',data=tank_game.join_code)
     host_client.sendall(msg)
     host_client.close()
 
-    while not tank_game.is_game_started:
-        client, addr = tank_game.socket.accept()
-        print("Connected: " + addr[0])
-        new_player_profile = PlayerProfil(client)
-
-        if len(tank_game.connected_players) == 0:
-            tank_game.host_socket = new_player_profile
-        
-        tank_game.connected_players['api_key'] = ''
-        # TODO - Send ilosc podlaczonych graczy
-        # TODO - dla hosta sprawdz czy wystartował grę :) 
-
+    tank_game.wait_for_players()
+    print("GAME STARTED")
+    
     running = True
     while running:
+        players_objects = pygame.sprite.Group()
+
         for key, player_profile in tank_game.connected_players.items():
+            players_objects.add(player_profile.player_game_object)
             pressed_keys = None
-            if not player_profile.recv_from_queue.empty():
-                pressed_keys = player_profile.recv_from_queue.get()
+            # if not player_profile.recv_from_queue.empty():
+                # pressed_keys = player_profile.recv_from_queue.get()
 
             if pressed_keys != None:
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets)
@@ -162,9 +188,11 @@ def start_the_game(host_client):
 
         bullets.update()
 
-        objects_positions = serialize_game_objects(players, bullets)
-        for player in players:
-            player.send_to_queue(objects_positions)
+        objects_positions = serialize_game_objects(players_objects, bullets)
+        msg = prepare_message(command='UPDATE_GAME',status='SUCC',data=objects_positions)
+        
+        for key, player_profile in tank_game.connected_players.items():
+            player_profile.send_to_queue.put(msg)
 
         clock.tick(30)
 
@@ -180,19 +208,26 @@ def on_new_client(client):
         command = headers.get('Command')
         if command == 'REGISTER':
             login = get_random_uuid_for_player()
+            mess = prepare_message(command='REGISTER',status='SUCC',data=login)
+            # print('I send: ' + mess.decode('utf-8'))
 
-            if headers.get('Auth') == 'None':
-                mess = prepare_message(command='REGISTER',status='SUCC',data=login)
-                print('I send: ' + mess.decode('utf-8'))
-            else:
-                mess = prepare_message(command='REGISTER',status='ERR')
+            # TODO - Zpisywanie do plaintext zarejstrowanych USSID
+            # mess = prepare_message(command='REGISTER',status='ERR')
 
             client.sendall(mess)
-            print('I send: ' + mess.decode('utf-8'))
+            # print('I send: ' + mess.decode('utf-8'))
         elif command == 'START_CHANNEL':
             game_threat = threading.Thread(target=start_the_game, args=(client, ))
             game_threat.start()
             break 
+        elif command == 'JOIN_CHANNEL':
+            global AVAILABLE_GAMES
+            if data in AVAILABLE_GAMES:
+                mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=AVAILABLE_GAMES[data].port) 
+                client.sendall(mess)
+            else:
+                mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
+                client.sendall(mess)
         elif command == 'QUIT GAME':
             client.close()
             break
@@ -200,7 +235,7 @@ def on_new_client(client):
         else:
             mess = prepare_message('INVALID COMMAND','ERR','') 
             client.sendall(mess)
-            print('I send: ' + mess.decode('utf-8'))
+            # print('I send: ' + mess.decode('utf-8'))
 
         #------------
     # if command == 'QUIT GAME':
