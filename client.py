@@ -7,6 +7,7 @@ import pygame_menu
 import asyncio
 import websockets
 import threading
+from queue import Queue
 
 # dialog box
 from tkinter import *
@@ -36,14 +37,16 @@ from pygame.locals import (
     QUIT,
 )
 
-from game_config import *
+from config import *
 from game_classes import Player, Bullet
+# from utils import recv_from_socket_from_queue, send_to_socket_from_queue
 
 
 def show_popup(msg):
     messagebox.showinfo(msg,'OK')
 
 
+##########################################################
 pressed_keys = None
 PLAYER_POSITIONS = None
 async def serve_client():
@@ -62,15 +65,46 @@ async def serve_client():
                 global PLAYER_POSITIONS
                 PLAYER_POSITIONS = recived_from_server
 
-            delay = 30.0/1000.0
-            await asyncio.sleep(delay)
+            # delay = 30.0/1000.0
+            # await asyncio.sleep(delay)
 
 def start_loop():
     new_loop = asyncio.new_event_loop()
     new_loop.run_until_complete(serve_client())
 
-t = threading.Thread(target=start_loop)
-t.start()
+# t = threading.Thread(target=start_loop)
+# t.start()
+##########################################################
+
+async def send_to_server(_queue):
+    uri = "ws://localhost:8881"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            if _queue.empty():
+                await websocket.send('None')
+            else:
+                data = _queue.get()
+                print("sending...")#, data)
+                await websocket.send(data)
+
+async def recv_from_server(_queue):
+    uri = "ws://localhost:8881"
+    async with websockets.connect(uri) as websocket:
+        while True:
+            recived_from_server = await websocket.recv()
+            if recived_from_server != None:
+                print("recived...", recived_from_server)
+                _queue.put(recived_from_server)
+
+
+def recv_from_server_loop(_queue):
+    new_loop = asyncio.new_event_loop()
+    new_loop.run_until_complete(recv_from_server(_queue))
+
+
+def send_to_server_loop(_queue):
+    new_loop = asyncio.new_event_loop()
+    new_loop.run_until_complete(send_to_server(_queue))
 
 
 pygame.mixer.init()
@@ -90,16 +124,34 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 # pygame.mixer.music.stop()
 # pygame.mixer.quit()
 
-bullets = pygame.sprite.Group()
-clouds = pygame.sprite.Group()
+
+def deserialize_game_objects(msg):
+    recived_objects = json.loads(msg)
+    entities = []
+    for recived_object in recived_objects:
+        if recived_object['type'] == 'bullet':
+            entity = Bullet(recived_object['centerx'], 
+                            recived_object['centery'], 
+                            recived_object['angle'])
+            entities.append(entity)
+        elif recived_object['type'] == 'player':
+            entity = Player(recived_object['nickname'], 
+                            recived_object['centerx'], 
+                            recived_object['centery'], 
+                            recived_object['angle'])
+            entities.append(entity)
+    return entities
+
 
 def start_the_game():
     running = True
 
-    global bullets
-    global clouds
-    global all_sprites
-    global pressed_keys
+    recv_from_queue = Queue()
+    send_to_queue = Queue()
+    recv_from_thread = threading.Thread(target=recv_from_server_loop, args=(recv_from_queue, ))
+    send_to_thread = threading.Thread(target=send_to_server_loop, args=(send_to_queue, ))
+    recv_from_thread.start()
+    send_to_thread.start()
 
     while running:
         for event in pygame.event.get():
@@ -111,25 +163,19 @@ def start_the_game():
                 running = False
 
         pressed_keys = pygame.key.get_pressed()
+        my_pickled_object = pickle.dumps(pressed_keys)
+        send_to_queue.put(my_pickled_object)
 
         screen.fill(GAME_BG)
 
-        global PLAYER_POSITIONS
-        if PLAYER_POSITIONS is not None:
-            recived_objects = json.loads(PLAYER_POSITIONS)
-            for recived_object in recived_objects:
-                print(recived_object)
-                if recived_object['type'] == 'bullet':
-                    entity = Bullet(recived_object['centerx'], 
-                                    recived_object['centery'], 
-                                    recived_object['angle'])
-                    screen.blit(entity.surf, entity.rect)
-                elif recived_object['type'] == 'player':
-                    entity = Player(recived_object['nickname'], 
-                                    recived_object['centerx'], 
-                                    recived_object['centery'], 
-                                    recived_object['angle'])
-                    screen.blit(entity.surf, entity.rect)
+        PLAYER_POSITIONS = None
+        if not recv_from_queue.empty():
+            PLAYER_POSITIONS = recv_from_queue.put()
+            if PLAYER_POSITIONS != 'None':
+                if PLAYER_POSITIONS is not None:
+                    entities = deserialize_game_objects(PLAYER_POSITIONS)
+                    for entity in entities:
+                        screen.blit(entity.surf, entity.rect)
 
         pygame.display.flip()
         clock.tick(30)

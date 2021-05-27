@@ -16,7 +16,7 @@ from pygame.locals import (
     QUIT,
 )
 
-from game_config import *
+from config import *
 
 
 class Player(pygame.sprite.Sprite):

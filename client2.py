@@ -1,6 +1,6 @@
 import socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(('localhost', 8881))
+sock.connect(('localhost', 5667))
 print ("Connected to server")
 data = """A few lines of data
 to test the operation
