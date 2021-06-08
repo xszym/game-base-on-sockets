@@ -35,7 +35,7 @@ def get_port_of_socket(sock):
 
 
 def open_new_connection(port=0):
-    sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.bind((SERVER_IP, port))
     sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
     print("Starting new connection at port", get_port_of_socket(sock))
@@ -109,7 +109,10 @@ class TankGame():
 
     def __del__(self):
         global AVAILABLE_GAMES
-        AVAILABLE_GAMES.pop(self.join_code)
+        try:
+            AVAILABLE_GAMES.pop(self.join_code)
+        except KeyError:
+            logging.exception("AVAILABLE_GAMES pop fails")
         self.socket.close()
 
 
@@ -118,18 +121,14 @@ def decode_json_data(string):
     return json.loads(msg)
 
 
-def start_the_game(host_client):
+def game_loop(tank_game):
     pygame.init()
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     bullets = pygame.sprite.Group()
 
-    tank_game = TankGame()
-    msg = prepare_message(command='START_CHANNEL',status='SUCC',data=tank_game.join_code)
-    host_client.sendall(msg)
-
     tank_game.wait_for_players()
-    print("GAME STARTED")
+    logging.info("GAME STARTED")
     
     running = True
     while running:
@@ -158,6 +157,15 @@ def start_the_game(host_client):
         clock.tick(30)
 
     del tank_game
+
+
+def start_the_game():
+    tank_game = TankGame()
+
+    game_threat = threading.Thread(target=game_loop, args=(tank_game, ))
+    game_threat.start()
+
+    return tank_game.join_code
 
 
 def get_random_uuid_for_player():
@@ -246,26 +254,31 @@ class TankGameServerProtocol(asyncio.Protocol):
                 if command == 'REGISTER':
                     login = get_random_uuid_for_player()
                     mess = prepare_message(command='REGISTER',status='SUCC',data=login)
-
+                    self.transport.write(mess)
                     # TODO - Zpisywanie do plaintext zarejstrowanych USSID
                     # mess = prepare_message(command='REGISTER',status='ERR')
                 elif command == 'START_CHANNEL':
-                    game_threat = threading.Thread(target=start_the_game, args=(client, ))
-                    game_threat.start()
+                    join_code = start_the_game()
+                    msg = prepare_message(command='START_CHANNEL',status='SUCC', data=join_code)
+                    self.transport.write(msg)
                 elif command == 'JOIN_CHANNEL':
                     global AVAILABLE_GAMES
-                    if data in AVAILABLE_GAMES:
-                        mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[data].port)) 
+                    join_code = headers.get('Data')
+                    if join_code in AVAILABLE_GAMES:
+                        mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[join_code].port)) 
                     else:
                         mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
+                    self.transport.write(mess)
                 elif command == 'QUIT GAME':
-                    mess = prepare_message('GAME_QUIR','SUCC','') 
+                    mess = prepare_message('GAME_QUIR','SUCC','')
+                    self.transport.write(mess)
                 else:
-                    mess = prepare_message('INVALID COMMAND','ERR','') 
-                print(headers)
+                    mess = prepare_message('INVALID COMMAND','ERR','')
+                    self.transport.write(mess)
             except:
-                mess = prepare_message('INVALID COMMAND','ERR','') 
-            self.transport.write(mess)
+                mess = prepare_message('INVALID COMMAND','ERR','')
+                self.transport.write(mess)
+            
 
         #     msg = msg.decode('utf-8')
         #     if msg.isdigit():
@@ -281,35 +294,28 @@ class TankGameServerProtocol(asyncio.Protocol):
         print('Client {} disconnected'.format(self.addr))
         clients.remove(self)
 
-    # async def async_fib(self, n):
-    #     task = await loop.run_in_executor(thread_pool, recur_fibo, n)
-    #     response = str(task).encode()
-    #     msg = f"fib({n})={response}"
-    #     msg = prep_msg(msg)
-    #     self.transport.write(msg)
 
+thread_pool = ThreadPoolExecutor()
+loop = asyncio.get_event_loop()
 
-# thread_pool = ThreadPoolExecutor()
-# loop = asyncio.get_event_loop()
+# Create server and initialize on the event loop
+coroutine = loop.create_server(TankGameServerProtocol, host='0.0.0.0', port=MAIN_SERVER_SOCKET_PORT)
+server = loop.run_until_complete(coroutine)
 
-# # Create server and initialize on the event loop
-# coroutine = loop.create_server(TankGameServerProtocol, host='0.0.0.0', port=MAIN_SERVER_SOCKET_PORT)
-# server = loop.run_until_complete(coroutine)
+# print listening socket info
+for s in server.sockets:
+    addr = s.getsockname()
+    print('Listening on {}'.format(addr))
 
-# # print listening socket info
-# for socket in server.sockets:
-#     addr = socket.getsockname()
-#     print('Listening on {}'.format(addr))
+# Run the loop to process client connections
+try:
+    loop.run_forever()
+except KeyboardInterrupt:
+    pass
 
-# # Run the loop to process client connections
-# try:
-#     loop.run_forever()
-# except KeyboardInterrupt:
-#     pass
+server.close()
+loop.run_until_complete(server.wait_closed())
+loop.close()
 
-# server.close()
-# loop.run_until_complete(server.wait_closed())
-# loop.close()
-
-if __name__ == '__main__':
-    main_server_loop()
+# if __name__ == '__main__':
+#     main_server_loop()

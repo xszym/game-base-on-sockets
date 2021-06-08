@@ -109,6 +109,7 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 - [ ] Pokazywanie roomów 
 - [ ] Serwer zdarzeniowy
 - [ ] Testy i obsługa błędów
+- [ ] Serduszka nad graczami 
 
 
 # Bugs

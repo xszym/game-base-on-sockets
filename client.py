@@ -158,8 +158,12 @@ def join_room(code):
     mess = prepare_message(command='JOIN_CHANNEL',data='9Z1D')
     MAIN_SERVER_SOCKET.sendall(mess)
     headers, port = recv_msg_from_socket(MAIN_SERVER_SOCKET)
-    start_the_game(int(port))
-    logging.info('TODO - próba dołączenia do  room')
+    print(headers, port)
+    if headers.get(status_header_code) == "SUCC":
+        start_the_game(int(port))
+        logging.info('TODO - próba dołączenia do  room')
+    else:
+        logging.info('TODO - Error podczas dołączania do room ')
 
 
 def draw_update_function_join_status_button(widget, menu):
@@ -192,7 +196,9 @@ def check_name(value):
 def host_game():
     mess = prepare_message(command='START_CHANNEL',auth='')
     MAIN_SERVER_SOCKET.sendall(mess)
+
     headers, code = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    print("HOST_GAME", headers, code)
     join_room(code)
     # start_the_game()
     # messagebox.showinfo('Continue','OK')

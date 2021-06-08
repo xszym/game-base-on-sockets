@@ -77,8 +77,6 @@ class FibServerProtocol(asyncio.Protocol):
 
 
 thread_pool = ThreadPoolExecutor()
-
-
 loop = asyncio.get_event_loop()
 # Create server and initialize on the event loop
 coroutine = loop.create_server(FibServerProtocol, host='0.0.0.0', port=1769)
