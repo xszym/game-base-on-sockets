@@ -2,7 +2,9 @@ import pygame
 import math
 import random
 import logging
+import time
 logging.basicConfig(level=logging.INFO)
+
 
 from pygame.locals import (
     RLEACCEL
@@ -30,11 +32,29 @@ class Player(pygame.sprite.Sprite):
         self.font = pygame.font.SysFont("Arial", 10)
         self.textSurf = self.font.render(self.nickname, 1, pygame.Color('white'))
         self.textSurfRotated = pygame.transform.rotate(self.textSurf, 180)
+        self.health_bar = pygame.Rect(0, 0, self.rect.width, 7)
+        self.health_bar_background = pygame.Rect(0, 0, self.rect.width, 7)
+        self.health_bar_background_rec = pygame.draw.rect(self.surf, (161, 161, 161), self.health_bar_background)
+        self.health_bar_rec = self.draw_health_bar()
 
         W = self.textSurf.get_width()
         H = self.textSurf.get_height()
         self.surf.blit(self.textSurf, [self.rect.width/2 - W/2, self.rect.height/4 - H/2]) # 
         self.surf.blit(self.textSurfRotated, [self.rect.width/2 - W/2, self.rect.height*3/4 - H/2])
+
+    def draw_health_bar(self):
+        if self.health < DEFAULT_PLAYER_HEALTH:
+            r = min(255, 255 - (255 * ((self.health - (DEFAULT_PLAYER_HEALTH - self.health)) / DEFAULT_PLAYER_HEALTH)))
+            g = min(255, 255 * (self.health / (DEFAULT_PLAYER_HEALTH / 2)))
+            color = (r, g, 98)
+            width_health = int(self.rect.width * self.health / DEFAULT_PLAYER_HEALTH)
+            self.health_bar = pygame.Rect(0, 0, width_health, 7)
+            return pygame.draw.rect(self.surf, color, self.health_bar)
+        else:
+            color = (0, 255, 98)
+            self.health_bar = pygame.Rect(0, 0, self.rect.width, 7)
+            return pygame.draw.rect(self.surf, color, self.health_bar)
+
 
     def rotate_to_angle(self, _angle):
         if _angle != self.angle:
@@ -63,6 +83,8 @@ class Player(pygame.sprite.Sprite):
 
         if self.health < 1:
             return bullets
+
+        self.draw_health_bar()
 
         if pressed_keys[K_UP]:
             self.rotate_to_angle(180)
@@ -95,6 +117,8 @@ class Player(pygame.sprite.Sprite):
             elif self.angle == 270:
                 new_Bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
             bullets.add(new_Bullet)
+
+        
 
         if self.rect.left < 0:
             self.rect.left = 0
