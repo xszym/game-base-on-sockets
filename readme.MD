@@ -96,9 +96,10 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 
 
 # TODO
-- [ ] Kolizja pomiędzy czołgami 
-- [ ] Kolizja z pociskiem
-- [ ] Życie / END GAME
+- [x] Kolizja pomiędzy czołgami 
+- [x] Kolizja z pociskiem
+- [ ] Życie
+- [ ] END GAME
 - [ ] START_GAME od hosta
 - [ ] Pokazywanie ilośći połączonych graczy
 - [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
@@ -106,7 +107,7 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 - [ ] Odkomendować wiele roomów 
 - [ ] Join do serwera po Kodzie
 - [ ] Pokazywanie roomów 
-- [ ] Serwer zdarzeniowy (Spytać w poniedziałek)
+- [ ] Serwer zdarzeniowy
 - [ ] Testy i obsługa błędów
 
 
