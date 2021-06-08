@@ -67,7 +67,9 @@ def deserialize_game_objects(msg):
             entity = Player(recived_object['nickname'], 
                             recived_object['centerx'], 
                             recived_object['centery'], 
-                            recived_object['angle'])
+                            recived_object['angle'],
+                            recived_object['is_alive']
+                            )
             entities.append(entity)
     return entities
 

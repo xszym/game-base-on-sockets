@@ -12,9 +12,13 @@ from src.config import *
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, nickname, x, y, angle):
+    def __init__(self, nickname, x, y, angle, is_alive=True):
         super(Player, self).__init__()
-        self.surf = pygame.image.load("media/player.png").convert()
+        self.is_alive = is_alive
+        if self.is_alive:
+            self.surf = pygame.image.load("media/player.png").convert()
+        else:
+            self.surf = pygame.image.load("media/player_dead.png").convert()
         self.surf.set_colorkey((255, 255, 255), RLEACCEL)
         self.rect = self.surf.get_rect(
             center=(x, y)
@@ -38,7 +42,22 @@ class Player(pygame.sprite.Sprite):
             self.surf = pygame.transform.rotate(self.surf, angle_delta)
             self.angle = _angle
 
-    def update(self, pressed_keys, bullets):
+    def colide_dection_bullet(self, bullets):
+        for bullet in bullets:
+            if self.rect.colliderect(bullet):
+                self.is_alive = False
+                print('player died')
+                bullet.kill()                
+                self.surf.set_colorkey((255, 255, 255), RLEACCEL)
+                return True
+        return False
+
+    def update(self, pressed_keys, bullets, other_players):
+        self.colide_dection_bullet(bullets)
+
+        if not self.is_alive:
+            return bullets
+
         if pressed_keys[K_UP]:
             self.rotate_to_angle(180)
             self.rect.move_ip(0, -self.speed)
