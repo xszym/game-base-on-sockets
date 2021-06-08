@@ -239,9 +239,34 @@ class TankGameServerProtocol(asyncio.Protocol):
         for msg in msgs:
             try:
                 headers = decode_msg_header(msg)
+                command = headers.get('Command')
+
+                # TODO - Check if auth and auth correct ;) 
+
+                if command == 'REGISTER':
+                    login = get_random_uuid_for_player()
+                    mess = prepare_message(command='REGISTER',status='SUCC',data=login)
+
+                    # TODO - Zpisywanie do plaintext zarejstrowanych USSID
+                    # mess = prepare_message(command='REGISTER',status='ERR')
+                elif command == 'START_CHANNEL':
+                    game_threat = threading.Thread(target=start_the_game, args=(client, ))
+                    game_threat.start()
+                elif command == 'JOIN_CHANNEL':
+                    global AVAILABLE_GAMES
+                    if data in AVAILABLE_GAMES:
+                        mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[data].port)) 
+                    else:
+                        mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
+                elif command == 'QUIT GAME':
+                    mess = prepare_message('GAME_QUIR','SUCC','') 
+                else:
+                    mess = prepare_message('INVALID COMMAND','ERR','') 
                 print(headers)
             except:
-                print("Something not yes")
+                mess = prepare_message('INVALID COMMAND','ERR','') 
+            self.transport.write(mess)
+
         #     msg = msg.decode('utf-8')
         #     if msg.isdigit():
         #         n = int(msg)

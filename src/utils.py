@@ -42,7 +42,7 @@ def serialize_game_objects(players, bullets):
             "centerx": entity.rect.centerx,
             "centery":  entity.rect.centery,
             "angle":  entity.angle,
-            "is_alive": entity.is_alive
+            "health": entity.health
         }
         response_models.append(entity_temp)
     return json.dumps(response_models)

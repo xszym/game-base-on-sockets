@@ -12,10 +12,10 @@ from src.config import *
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, nickname, x, y, angle, is_alive=True):
+    def __init__(self, nickname, x, y, angle, health=DEFAULT_PLAYER_HEALTH):
         super(Player, self).__init__()
-        self.is_alive = is_alive
-        if self.is_alive:
+        self.health = health
+        if self.health > 0:
             self.surf = pygame.image.load("media/player.png").convert()
         else:
             self.surf = pygame.image.load("media/player_dead.png").convert()
@@ -45,31 +45,45 @@ class Player(pygame.sprite.Sprite):
     def colide_dection_bullet(self, bullets):
         for bullet in bullets:
             if self.rect.colliderect(bullet):
-                self.is_alive = False
-                print('player died')
-                bullet.kill()                
-                self.surf.set_colorkey((255, 255, 255), RLEACCEL)
+                self.health = self.health - 1
+                bullet.kill()
                 return True
         return False
 
-    def update(self, pressed_keys, bullets, other_players):
+    def colide_dection_other_player(self, other_players):
+        for other_player in other_players:
+            if other_player.rect == self.rect:
+                continue
+            if self.rect.colliderect(other_player):
+                return True
+        return False
+
+    def update(self, pressed_keys, bullets, other_player):
         self.colide_dection_bullet(bullets)
 
-        if not self.is_alive:
+        if self.health < 1:
             return bullets
 
         if pressed_keys[K_UP]:
             self.rotate_to_angle(180)
             self.rect.move_ip(0, -self.speed)
+            if self.colide_dection_other_player(other_player):
+                self.rect.move_ip(0, self.speed)
         elif pressed_keys[K_DOWN]:
             self.rotate_to_angle(0)
             self.rect.move_ip(0, self.speed)
+            if self.colide_dection_other_player(other_player):
+                self.rect.move_ip(0, -self.speed)
         if pressed_keys[K_LEFT]:
             self.rotate_to_angle(270)
             self.rect.move_ip(-self.speed, 0)
+            if self.colide_dection_other_player(other_player):
+                self.rect.move_ip(self.speed, 0)
         elif pressed_keys[K_RIGHT]:
             self.rotate_to_angle(90)
             self.rect.move_ip(self.speed, 0)
+            if self.colide_dection_other_player(other_player):
+                self.rect.move_ip(-self.speed, 0)
 
         if pressed_keys[K_SPACE]:
             if self.angle == 0:
