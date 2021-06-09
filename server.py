@@ -42,7 +42,7 @@ def open_new_connection(port=0):
 
 
 class PlayerProfil():
-    def __init__(self, client_socket, nickname='nickname'):
+    def __init__(self, client_socket, connected_players_profiles, nickname='nickname'):
         self.socket = client_socket
         self.socket_port = get_port_of_socket(self.socket)
 
@@ -57,10 +57,7 @@ class PlayerProfil():
         self.nickname = nickname
         self.secret_key = '1234'
 
-        self.player_game_object = Player(self.nickname, randrange(400) + 10, randrange(300) + 10, 0)
-
-    def update(self):
-        pass
+        self.player_game_object = Player(self.nickname, randrange(400) + 10, randrange(300) + 10, 0, connected_players_profiles=connected_players_profiles)
 
     def __del__(self):
         self.socket.close()
@@ -78,9 +75,15 @@ class TankGame():
         self.port = get_port_of_socket(self.socket)
         self.is_game_started = False
         self.status = "WAITING"
+        self.was_two_players = False
 
         global AVAILABLE_GAMES
         AVAILABLE_GAMES[self.join_code] = self
+    
+    def update_connections(self):
+        for soc, player_profile in self.connected_players.items():
+            if not player_profile.send_to_thread.is_alive():
+                player_profile.player_game_object.health = 0
     
     def send_no_of_connected_players(self):
         # TODO - Send ilosc podlaczonych graczy
@@ -92,13 +95,14 @@ class TankGame():
     def accept_new_client(self):
         client, addr = self.socket.accept()
         print("Connected: " + addr[0] + " to game " + self.join_code)
-        new_player_profile = PlayerProfil(client)
+        new_player_profile = PlayerProfil(client, self.connected_players)
         self.connected_players[client] = new_player_profile # TODO - change key from client to auth
         return new_player_profile
 
     def accept_new_players(self):
         while True:
             self.accept_new_client()
+            self.was_two_players = True
 
     def wait_for_players(self):
         new_player_profile = self.accept_new_client()
@@ -113,15 +117,11 @@ class TankGame():
         self.status = "BUSY"
 
     def __del__(self):
-        for key, player_profile in tank_game.connected_players.items():
-            player_profile.send_to_newest_value[0] = None
-        
-        global AVAILABLE_GAMES
-        try:
-            AVAILABLE_GAMES.pop(self.join_code)
-            logging.info("Delete game " + self.join_code)
-        except KeyError:
-            logging.exception("AVAILABLE_GAMES pop fails")
+        # global AVAILABLE_GAMES
+        # del AVAILABLE_GAMES[self.join_code]
+        # print("Delete game " + self.join_code)
+        # for key, player_profile in tank_game.connected_players.items():
+        #     player_profile.send_to_newest_value[0] = None
 
         self.socket.close()
 
@@ -142,37 +142,48 @@ def game_loop(tank_game):
     
     running = True
     while running:
-        players_objects = pygame.sprite.Group()
+        tank_game.update_connections()
 
+        players_objects = pygame.sprite.Group()
         for key, player_profile in tank_game.connected_players.items():
             players_objects.add(player_profile.player_game_object)
+
+        for key, player_profile in tank_game.connected_players.items():
             pressed_keys = player_profile.recv_from_last_value[0]
-        
             if pressed_keys != '':
                 pressed_keys = decode_json_data(pressed_keys)
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
             else:
                 pressed_keys = pygame.key.get_pressed()
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
-                
+
         bullets.update()
 
         objects_positions = serialize_game_objects(players_objects, bullets)
-        msg = prepare_message(command='UPDATE_GAME',status='SUCC',data=objects_positions)
+        msg_update_game = prepare_message(command='UPDATE_GAME',status='SUCC',data=objects_positions)
         
-        no_alive_players = sum([min(v.player_game_object.health, 1) for k, v in tank_game.connected_players.items()])
-        if no_alive_players == 0:
-            print("Running")
+        no_alive_players = sum([max(min(p.health, 1), 0) for p in players_objects])
+        if no_alive_players == 1 and tank_game.was_two_players: 
             running = False
 
         for key, player_profile in tank_game.connected_players.items():
-            if player_profile.player_game_object.health > 0:
-                player_profile.send_to_newest_value[0] = msg
-            else:
-                msg = prepare_message(command='GAME_OVER',status='SUCC',data=objects_positions)
-                player_profile.send_to_newest_value[0] = msg
-        clock.tick(30)
+            if running == False:
+                if player_profile.player_game_object.health > 0:
+                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=no_alive_players)
+                    player_profile.send_to_newest_value[0] = msg
+                else:
+                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=no_alive_players+1)
+                    player_profile.send_to_newest_value[0] = msg
+            else: 
+                if player_profile.player_game_object.health > 0:
+                    player_profile.send_to_newest_value[0] = msg_update_game
+                else:
+                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=no_alive_players+1)
+                    player_profile.send_to_newest_value[0] = msg
 
+        clock.tick(30)
+    global AVAILABLE_GAMES
+    del AVAILABLE_GAMES[tank_game.join_code]
     del tank_game
 
 
@@ -242,6 +253,7 @@ class TankGameServerProtocol(asyncio.Protocol):
                     self.transport.write(msg)
                 elif command == 'JOIN_CHANNEL':
                     global AVAILABLE_GAMES
+                    print(AVAILABLE_GAMES.keys())
                     join_code = headers.get('Data')
                     if join_code in AVAILABLE_GAMES:
                         mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[join_code].port)) 

@@ -116,3 +116,6 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 - [ ] Małe prawdopodobieństwo spawnu na innym graczu 
 - [ ] Dead jest przekręcone przy śmieci 
 - [ ] Po wyjściu wszystkich z gry - niech player cały czas żyje, a gra cały czas trwa
+- [ ] Po rozłączeniu gracz zostaje żywy mimo że wyszedł 
+- [ ] Włączenie klienta gdy nie działa serwer albo nie ma podłączenie, nie pozwala się połączyć nawet jeśli serwer później się włączy
+- [ ] Po rozłączeniu jedynego gracza serwer nadal stoi 

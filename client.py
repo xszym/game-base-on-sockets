@@ -80,6 +80,8 @@ def deserialize_game_objects(msg):
 
 def start_the_game(port):
     running = True
+    is_game_over = False
+    player_place = 'No place'
     game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     game_socket.connect((SERVER_IP, port))
 
@@ -91,39 +93,47 @@ def start_the_game(port):
     send_to_thread.start()
 
     while running:
+        screen.fill(GAME_BG)
+
         for event in pygame.event.get():
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     running = False
             elif event.type == QUIT:
                 running = False
-
-        pressed_keys = pygame.key.get_pressed()
-        dumped_pressed_keys = json.dumps(pressed_keys)
-        msg = prepare_message(command='UPDATE_GAME',data=dumped_pressed_keys)
-        send_to_newest_value[0] = msg
-        
-        screen.fill(GAME_BG)
-        PLAYER_POSITIONS = None
-        if recv_from_last_value[0] != '':
-            MSG_FROM_SERVER = recv_from_last_value[0]
-            # TODO - IF MSG GAME OVER end game
-            headers = MSG_FROM_SERVER[0]
+        if is_game_over:
+            textsurface = myfont.render(f"You got {player_place} place", False, (0, 0, 0))
+            screen.blit(textsurface,(int(SCREEN_WIDTH/2),int(SCREEN_HEIGHT/2)))
+        else:
+            pressed_keys = pygame.key.get_pressed()
+            dumped_pressed_keys = json.dumps(pressed_keys)
+            msg = prepare_message(command='UPDATE_GAME',data=dumped_pressed_keys)
+            send_to_newest_value[0] = msg
             
-            if headers[command_header_code] == 'GAME_OVER':
-                running = False
-
-            PLAYER_POSITIONS = MSG_FROM_SERVER[1]
-            if PLAYER_POSITIONS is not None:
-                entities = deserialize_game_objects(PLAYER_POSITIONS)
-                for entity in entities:
-                    screen.blit(entity.surf, entity.rect)
+            PLAYER_POSITIONS = None
+            if recv_from_last_value[0] != '':
+                MSG_FROM_SERVER = recv_from_last_value[0]
+                # TODO - IF MSG GAME OVER end game
+                headers = MSG_FROM_SERVER[0]
+                
+                if headers[command_header_code] == 'GAME_OVER':
+                    # running = False
+                    is_game_over = True
+                    player_place = MSG_FROM_SERVER[1]
+                elif headers[command_header_code] == 'UPDATE_GAME':
+                    PLAYER_POSITIONS = MSG_FROM_SERVER[1]
+                    if PLAYER_POSITIONS is not None:
+                        entities = deserialize_game_objects(PLAYER_POSITIONS)
+                        for entity in entities:
+                            screen.blit(entity.surf, entity.rect)
 
         global GAME_JOIN_CODE
         textsurface = myfont.render(GAME_JOIN_CODE, False, (0, 0, 0))
         screen.blit(textsurface,(0,0))
         pygame.display.flip()
         clock.tick(30)
+    send_to_newest_value[0] = None
+    game_socket.close()
 
 
 def create_menu_main():

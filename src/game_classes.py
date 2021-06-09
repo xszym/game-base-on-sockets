@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+from random import randrange
 import logging
 import time
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +15,7 @@ from src.config import *
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, nickname, x, y, angle, health=DEFAULT_PLAYER_HEALTH):
+    def __init__(self, nickname, x, y, angle, health=DEFAULT_PLAYER_HEALTH, connected_players_profiles=None):
         super(Player, self).__init__()
         self.health = health
         if self.health > 0:
@@ -25,6 +26,20 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(
             center=(x, y)
         )
+
+        if connected_players_profiles != None:
+            while True:
+                is_colliding = False
+                for s, other_player_profile in connected_players_profiles.items():
+                    if self.rect.colliderect(other_player_profile.player_game_object.rect):
+                        is_colliding = True
+                if is_colliding:
+                    self.rect = self.surf.get_rect(
+                        center=(randrange(400) + 10, randrange(300) + 10)
+                    )
+                else:
+                    break
+
         self.speed = PLAYER_DEFAULT_SPEED
         self.angle = angle
         self.surf = pygame.transform.rotate(self.surf, angle-90)
