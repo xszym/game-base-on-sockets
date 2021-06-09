@@ -28,7 +28,12 @@ K_ESCAPE = 41
 
 
 ### SOCKETS / NETWORK ###
-SERVER_IP = os.environ.get('SERVER_IP', default='0.0.0.0')
+IS_LOCAL = False
+if IS_LOCAL:
+    SERVER_IP = '0.0.0.0'
+else:
+    SERVER_IP = os.environ.get('SERVER_IP', default='0.0.0.0')
+    
 MAIN_SERVER_SOCKET_PORT = int(os.environ.get('PORT', default=40000))
 MIN_PORT=50000
 MAX_PORT=50100
