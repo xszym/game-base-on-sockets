@@ -110,4 +110,5 @@ def send_to_socket_from_pointer(_socket, value):
                 last_update_millis = now_millis
             sleep(1/20)
         except:
+            print("Breaked connection on port")
             break

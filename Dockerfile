@@ -1,6 +1,6 @@
 
 # pull official base image
-FROM python:3.8.1-slim-buster
+FROM python:3.8.5
 
 # set working directory
 RUN mkdir -p /usr/src/app

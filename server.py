@@ -40,14 +40,14 @@ def open_new_connection(port=0):
             try:
                 new_port = random.randrange(MIN_PORT, MAX_PORT)
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.bind(('localhost', new_port))
+                sock.bind(('0.0.0.0', new_port))
                 sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
                 break
             except:
                 pass
     else:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind(('localhost', port))
+        sock.bind(('0.0.0.0', port))
         sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
     print("Starting new connection at port", get_port_of_socket(sock))
     return sock
