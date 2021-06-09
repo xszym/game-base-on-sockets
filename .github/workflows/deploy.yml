@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
     runs-on: [ubuntu-latest]
     steps:
       - uses: actions/checkout@v1
@@ -13,4 +14,4 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.ID_RSA }}
-          script: cd game-base-on-sockets && git pull && git checkout main && docker-compose up --build
+          script: cd game-base-on-sockets && git pull && git checkout main && docker-compose up --build -d
