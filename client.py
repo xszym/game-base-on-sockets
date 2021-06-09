@@ -33,8 +33,17 @@ from src.game_classes import Player, Bullet
 from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to_pointer, send_to_socket_from_pointer
 
 
-MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
+MAIN_SERVER_SOCKET = None
+
+def connect_to_main_server():
+    global MAIN_SERVER_SOCKET
+    try:
+        MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
+    except:
+        print("Error while connecting to main server")
+connect_to_main_server()
+
 
 pygame.mixer.init()
 pygame.init()
@@ -179,7 +188,12 @@ def update_join_status(code):
 
 def join_room(code):
     mess = prepare_message(command='JOIN_CHANNEL',data=code)
-    MAIN_SERVER_SOCKET.sendall(mess)
+    try:
+        MAIN_SERVER_SOCKET.sendall(mess)
+    except:
+        connect_to_main_server()
+        MAIN_SERVER_SOCKET.sendall(mess)
+    
     headers, port = recv_msg_from_socket(MAIN_SERVER_SOCKET)
     print(headers, port)
     if headers.get(status_header_code) == "SUCC":
@@ -220,7 +234,11 @@ def check_name(value):
 
 def host_game():
     mess = prepare_message(command='START_CHANNEL',auth='')
-    MAIN_SERVER_SOCKET.sendall(mess)
+    try:
+        MAIN_SERVER_SOCKET.sendall(mess)
+    except:
+        connect_to_main_server()
+        MAIN_SERVER_SOCKET.sendall(mess)
 
     headers, code = recv_msg_from_socket(MAIN_SERVER_SOCKET)
     print("HOST_GAME", headers, code)

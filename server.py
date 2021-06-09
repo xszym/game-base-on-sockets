@@ -80,10 +80,15 @@ class TankGame():
         global AVAILABLE_GAMES
         AVAILABLE_GAMES[self.join_code] = self
     
-    def update_connections(self):
+    def check_connections(self):
+        no_of_connections = 0
         for soc, player_profile in self.connected_players.items():
             if not player_profile.send_to_thread.is_alive():
                 player_profile.player_game_object.health = 0
+            else:
+                no_of_connections += 1
+        return no_of_connections
+        
     
     def send_no_of_connected_players(self):
         # TODO - Send ilosc podlaczonych graczy
@@ -142,7 +147,9 @@ def game_loop(tank_game):
     
     running = True
     while running:
-        tank_game.update_connections()
+        no_of_alive_connections = tank_game.check_connections()
+        if no_of_alive_connections == 0:
+            running = False
 
         players_objects = pygame.sprite.Group()
         for key, player_profile in tank_game.connected_players.items():

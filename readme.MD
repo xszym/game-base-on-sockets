@@ -111,11 +111,12 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 
 
 # Bugs
-- [ ] Jak klient się rozłącza to nie usuwa go z listy połączonych graczy (quit do menu -> wysla do serwera ze wychodzi z gry, serwer usuwa gracza z listy)
-- [ ] Możliwość sepownowania dwóch czołgów w tym samym miejscu (ekran podzielony na 4 czesci, w zaleznosci od nr gracza w innej czesci sie spawnuje) 
-- [ ] Małe prawdopodobieństwo spawnu na innym graczu 
+- [x] Jak klient się rozłącza to nie usuwa go z listy połączonych graczy (quit do menu -> wysla do serwera ze wychodzi z gry, serwer usuwa gracza z listy)
+- [x] Możliwość sepownowania dwóch czołgów w tym samym miejscu 
+- [x] Małe prawdopodobieństwo spawnu na innym graczu 
 - [ ] Dead jest przekręcone przy śmieci 
-- [ ] Po wyjściu wszystkich z gry - niech player cały czas żyje, a gra cały czas trwa
-- [ ] Po rozłączeniu gracz zostaje żywy mimo że wyszedł 
-- [ ] Włączenie klienta gdy nie działa serwer albo nie ma podłączenie, nie pozwala się połączyć nawet jeśli serwer później się włączy
-- [ ] Po rozłączeniu jedynego gracza serwer nadal stoi 
+- [x] Po wyjściu wszystkich z gry - niech player cały czas żyje, a gra cały czas trwa
+- [x] Po rozłączeniu gracz zostaje żywy mimo że wyszedł 
+- [x] Włączenie klienta gdy nie działa serwer albo nie ma podłączenie, nie pozwala się połączyć nawet jeśli serwer później się włączy
+- [ ] NIe obsłgujemy błędów gdy serwer jest całgowicie wyłączony
+- [x] Po rozłączeniu jedynego gracza serwer nadal stoi 

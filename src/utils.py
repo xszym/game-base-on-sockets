@@ -2,7 +2,7 @@ import time
 import pickle
 import json
 import struct
-from time import sleep
+from time import sleep, time
 
 from src.config import *
 
@@ -93,12 +93,15 @@ def recv_from_socket_to_pointer(_socket, value):
 
 def send_to_socket_from_pointer(_socket, value):
     last_send_value = ''
+    last_update_millis = current_milliseconds()
     while True:
+        now_millis = current_milliseconds()
         if value[0] == None:
             break
-        if last_send_value != value[0]:
+        if last_send_value != value[0] or now_millis - last_update_millis > 1000 :
             newest_data = value[0]
             if newest_data != '':
                 _socket.send(newest_data)
             last_send_value = newest_data
+            last_update_millis = now_millis
         sleep(1/20)
