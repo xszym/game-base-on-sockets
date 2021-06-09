@@ -101,25 +101,28 @@ class TankGame():
             self.accept_new_client()
 
     def wait_for_players(self):
-        while not self.is_game_started:
-            new_player_profile = self.accept_new_client()
-            if len(self.connected_players) == 1:
-                self.host_socket = new_player_profile
-            
-            game_threat = threading.Thread(target=self.accept_new_players) # , args=(tank_game, )
-            game_threat.start()
-            self.is_game_started = True
-
-            # TODO - send_no_of_connected_players(self)
-            # TODO - dla hosta sprawdz czy wystartowal grę :)
+        new_player_profile = self.accept_new_client()
+        if len(self.connected_players) == 1:
+            self.host_socket = new_player_profile
+        
+        accept_new_players_thread = threading.Thread(target=self.accept_new_players)
+        accept_new_players_thread.start()
+        self.accept_new_players_thread = accept_new_players_thread
+        self.is_game_started = True
+        # TODO - send_no_of_connected_players(self)
         self.status = "BUSY"
 
     def __del__(self):
+        for key, player_profile in tank_game.connected_players.items():
+            player_profile.send_to_newest_value[0] = None
+        
         global AVAILABLE_GAMES
         try:
             AVAILABLE_GAMES.pop(self.join_code)
+            logging.info("Delete game " + self.join_code)
         except KeyError:
             logging.exception("AVAILABLE_GAMES pop fails")
+            
         self.socket.close()
 
 
@@ -143,7 +146,6 @@ def game_loop(tank_game):
 
         for key, player_profile in tank_game.connected_players.items():
             players_objects.add(player_profile.player_game_object)
-
             pressed_keys = player_profile.recv_from_last_value[0]
         
             if pressed_keys != '':
@@ -152,14 +154,19 @@ def game_loop(tank_game):
             else:
                 pressed_keys = pygame.key.get_pressed()
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
-
+            
+            if player_profile.player_game_object.health < 1:
+                msg = prepare_message(command='GAME_OVER',status='SUCC',data=objects_positions)
+                player_profile.send_to_newest_value[0] = msg
+                
         bullets.update()
 
         objects_positions = serialize_game_objects(players_objects, bullets)
         msg = prepare_message(command='UPDATE_GAME',status='SUCC',data=objects_positions)
         
         for key, player_profile in tank_game.connected_players.items():
-            player_profile.send_to_newest_value[0] = msg
+            if player_profile.player_game_object.health > 0:
+                player_profile.send_to_newest_value[0] = msg
 
         clock.tick(30)
 
@@ -239,7 +246,7 @@ class TankGameServerProtocol(asyncio.Protocol):
                         mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
                     self.transport.write(mess)
                 elif command == 'QUIT GAME':
-                    mess = prepare_message('GAME_QUIR','SUCC','')
+                    mess = prepare_message('GAME_QUIT','SUCC','')
                     self.transport.write(mess)
                 else:
                     mess = prepare_message('INVALID COMMAND','ERR','')

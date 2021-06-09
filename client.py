@@ -108,6 +108,11 @@ def start_the_game(port):
         if recv_from_last_value[0] != '':
             MSG_FROM_SERVER = recv_from_last_value[0]
             # TODO - IF MSG GAME OVER end game
+            headers = MSG_FROM_SERVER[0]
+            
+            if headers[command_header_code] == 'GAME_OVER':
+                running = False
+
             PLAYER_POSITIONS = MSG_FROM_SERVER[1]
             if PLAYER_POSITIONS is not None:
                 entities = deserialize_game_objects(PLAYER_POSITIONS)
@@ -171,7 +176,6 @@ def join_room(code):
         global GAME_JOIN_CODE
         GAME_JOIN_CODE = code
         start_the_game(int(port))
-        logging.info('TODO - próba dołączenia do  room')
     else:
         logging.info('TODO - Error podczas dołączania do room ')
         raise "Join during joinning to room"

@@ -94,6 +94,8 @@ def recv_from_socket_to_pointer(_socket, value):
 def send_to_socket_from_pointer(_socket, value):
     last_send_value = ''
     while True:
+        if value[0] == None:
+            break
         if last_send_value != value[0]:
             newest_data = value[0]
             if newest_data != '':

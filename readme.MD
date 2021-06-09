@@ -98,22 +98,23 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 # TODO
 - [x] Kolizja pomiędzy czołgami 
 - [x] Kolizja z pociskiem
-- [ ] Życie
+- [x] Życie
 - [ ] END GAME
 - [ ] START_GAME od hosta
 - [ ] Pokazywanie ilośći połączonych graczy
 - [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
 - [ ] Nickname wysyłać od klienta i przypisać go do playera
-- [ ] Odkomendować wiele roomów 
-- [ ] Join do serwera po Kodzie
+- [x] Odkomendować wiele roomów 
+- [x] Join do serwera po Kodzie
 - [ ] Pokazywanie roomów 
-- [ ] Serwer zdarzeniowy
+- [x] Serwer zdarzeniowy
 - [ ] Testy i obsługa błędów
-- [ ] Serduszka nad graczami 
+- [x] Serduszka nad graczami 
 
 
 # Bugs
 - [ ] Jak klient się rozłącza to nie usuwa go z listy połączonych graczy (quit do menu -> wysla do serwera ze wychodzi z gry, serwer usuwa gracza z listy)
 - [ ] Możliwość sepownowania dwóch czołgów w tym samym miejscu (ekran podzielony na 4 czesci, w zaleznosci od nr gracza w innej czesci sie spawnuje) 
 - [ ] Małe prawdopodobieństwo spawnu na innym graczu 
+- [ ] Dead jest przekręcone przy śmieci 
 
