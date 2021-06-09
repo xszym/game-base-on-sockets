@@ -28,7 +28,7 @@ K_ESCAPE = 41
 
 
 ### SOCKETS / NETWORK ###
-IS_LOCAL = True
+IS_LOCAL = False
 if IS_LOCAL:
     SERVER_IP = '0.0.0.0'
 else:

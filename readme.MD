@@ -120,3 +120,4 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 - [x] Włączenie klienta gdy nie działa serwer albo nie ma podłączenie, nie pozwala się połączyć nawet jeśli serwer później się włączy
 - [ ] NIe obsłgujemy błędów gdy serwer jest całgowicie wyłączony
 - [x] Po rozłączeniu jedynego gracza serwer nadal stoi 
+- [ ] Na winows przyciski od poruszania sie są zupełnie inne 
