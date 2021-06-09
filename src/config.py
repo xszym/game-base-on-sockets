@@ -1,4 +1,6 @@
+import os
 import pygame_menu
+
 
 ### GAME ### 
 ABOUT = ['Authors: Dorota i Szymon',
@@ -27,10 +29,13 @@ K_ESCAPE = 41
 
 ### SOCKETS / NETWORK ###
 
-SERVER_IP = 'localhost'
-SERVER_NO_OF_QUEUED_CONNECTIONS = 5
-MAIN_SERVER_SOCKET_PORT = 56705
+SERVER_IP = '0.0.0.0'
+MAIN_SERVER_SOCKET_PORT = int(os.environ.get('PORT', default=40000))
+MIN_PORT=50000
+MAX_PORT=50100
+
 RECV_BUFFOR_SIZE = 1
+SERVER_NO_OF_QUEUED_CONNECTIONS = 5
 
 soft_end = '\r\n' 
 hard_end = '\r\n\r\n'

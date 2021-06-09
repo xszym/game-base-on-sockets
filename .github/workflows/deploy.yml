@@ -13,4 +13,4 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.ID_RSA }}
-          script: cd game-base-on-sockets && git pull
+          script: cd game-base-on-sockets && git pull && git checkout main && docker-compose up --build

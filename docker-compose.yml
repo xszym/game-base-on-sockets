@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  server:
+    build: .
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${PORT}:${PORT}"
+      - "50000-50100:50000-50100"
+    command: ["python3", "server.py"]
