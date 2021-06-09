@@ -115,5 +115,5 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 # Bugs
 - [ ] Jak klient się rozłącza to nie usuwa go z listy połączonych graczy (quit do menu -> wysla do serwera ze wychodzi z gry, serwer usuwa gracza z listy)
 - [ ] Możliwość sepownowania dwóch czołgów w tym samym miejscu (ekran podzielony na 4 czesci, w zaleznosci od nr gracza w innej czesci sie spawnuje) 
-
+- [ ] Małe prawdopodobieństwo spawnu na innym graczu 
 

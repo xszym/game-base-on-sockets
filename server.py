@@ -10,7 +10,6 @@ from concurrent.futures import ThreadPoolExecutor
 
 import threading
 import pickle
-from time import time, sleep
 import uuid
 import os
 import json
@@ -43,7 +42,7 @@ def open_new_connection(port=0):
 
 
 class PlayerProfil():
-    def __init__(self, client_socket):
+    def __init__(self, client_socket, nickname='nickname'):
         self.socket = client_socket
         self.socket_port = get_port_of_socket(self.socket)
 
@@ -55,7 +54,7 @@ class PlayerProfil():
         self.recv_from_thread.start()
         self.send_to_thread.start()
 
-        self.nickname = 'Nickname'
+        self.nickname = nickname
         self.secret_key = '1234'
 
         self.player_game_object = Player(self.nickname, randrange(400) + 10, randrange(300) + 10, 0)
@@ -72,7 +71,7 @@ class PlayerProfil():
 
 class TankGame():
     def __init__(self):
-        self.join_code = '9Z1D' # TODO ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(4))
+        self.join_code = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(4))
 
         self.socket = open_new_connection()
         self.connected_players = {}
@@ -89,20 +88,28 @@ class TankGame():
         msg = prepare_message(command='UPDATE_CHANNEL',data=no_of_players)
         for p in self.connected_players:
             p.socket.sendall()
-        
+    
+    def accept_new_client(self):
+        client, addr = self.socket.accept()
+        print("Connected: " + addr[0] + " to game " + self.join_code)
+        new_player_profile = PlayerProfil(client)
+        self.connected_players[client] = new_player_profile # TODO - change key from client to auth
+        return new_player_profile
+
+    def accept_new_players(self):
+        while True:
+            self.accept_new_client()
+
     def wait_for_players(self):
         while not self.is_game_started:
-            client, addr = self.socket.accept()
-            print("Connected: " + addr[0] + " to game " + self.join_code)
-            new_player_profile = PlayerProfil(client)
-
-            if len(self.connected_players) == 0:
+            new_player_profile = self.accept_new_client()
+            if len(self.connected_players) == 1:
                 self.host_socket = new_player_profile
             
-            self.connected_players[client] = new_player_profile # TODO - change key from client to auth
-            print("len -> self.connected_players", len(self.connected_players))
-            if len(self.connected_players) == 2: # TODO - start na przycisk
-                self.is_game_started = True
+            game_threat = threading.Thread(target=self.accept_new_players) # , args=(tank_game, )
+            game_threat.start()
+            self.is_game_started = True
+
             # TODO - send_no_of_connected_players(self)
             # TODO - dla hosta sprawdz czy wystartowal grę :)
         self.status = "BUSY"
@@ -161,51 +168,13 @@ def game_loop(tank_game):
 
 def start_the_game():
     tank_game = TankGame()
-
     game_threat = threading.Thread(target=game_loop, args=(tank_game, ))
     game_threat.start()
-
     return tank_game.join_code
 
 
 def get_random_uuid_for_player():
     return str(uuid.uuid4())
-
-
-def on_new_client(client):
-    while True:
-        headers, data = recv_msg_from_socket(client)
-        command = headers.get('Command')
-
-        # TODO - Check if auth and auth correct ;) 
-
-        if command == 'REGISTER':
-            login = get_random_uuid_for_player()
-            mess = prepare_message(command='REGISTER',status='SUCC',data=login)
-
-            # TODO - Zpisywanie do plaintext zarejstrowanych USSID
-            # mess = prepare_message(command='REGISTER',status='ERR')
-
-            client.sendall(mess)
-        elif command == 'START_CHANNEL':
-            game_threat = threading.Thread(target=start_the_game, args=(client, ))
-            game_threat.start()
-        elif command == 'JOIN_CHANNEL':
-            global AVAILABLE_GAMES
-            if data in AVAILABLE_GAMES:
-                mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[data].port)) 
-                client.sendall(mess)
-            else:
-                mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
-                client.sendall(mess)
-        elif command == 'QUIT GAME':
-            client.close()
-            break
-        else:
-            mess = prepare_message('INVALID COMMAND','ERR','') 
-            client.sendall(mess)
-    
-    client.close()
 
 
 def main_server_loop():
@@ -247,7 +216,7 @@ class TankGameServerProtocol(asyncio.Protocol):
         for msg in msgs:
             try:
                 headers = decode_msg_header(msg)
-                command = headers.get('Command')
+                command = headers.get(command_header_code)
 
                 # TODO - Check if auth and auth correct ;) 
 
@@ -279,16 +248,6 @@ class TankGameServerProtocol(asyncio.Protocol):
                 mess = prepare_message('INVALID COMMAND','ERR','')
                 self.transport.write(mess)
             
-
-        #     msg = msg.decode('utf-8')
-        #     if msg.isdigit():
-        #         n = int(msg)
-        #         task = asyncio.create_task(self.async_fib(n))
-        #     else:
-        #         msg = "Input digit"
-        #         msg = prep_msg(msg)
-        #         self.transport.write(msg)
-        
     def connection_lost(self, ex):
         """ Called on client disconnect. Clean up client state """
         print('Client {} disconnected'.format(self.addr))
@@ -316,6 +275,3 @@ except KeyboardInterrupt:
 server.close()
 loop.run_until_complete(server.wait_closed())
 loop.close()
-
-# if __name__ == '__main__':
-#     main_server_loop()

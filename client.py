@@ -38,8 +38,12 @@ MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
 
 pygame.mixer.init()
 pygame.init()
+pygame.font.init()
+myfont = pygame.font.SysFont('Comic Sans MS', 30)
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+
+GAME_JOIN_CODE = ''
 
 # Load and play our background music
 # Sound source: http://ccmixter.org/files/Apoxode/59262
@@ -109,6 +113,10 @@ def start_the_game(port):
                 entities = deserialize_game_objects(PLAYER_POSITIONS)
                 for entity in entities:
                     screen.blit(entity.surf, entity.rect)
+
+        global GAME_JOIN_CODE
+        textsurface = myfont.render(GAME_JOIN_CODE, False, (0, 0, 0))
+        screen.blit(textsurface,(0,0))
         pygame.display.flip()
         clock.tick(30)
 
@@ -155,15 +163,18 @@ def update_join_status(code):
 
 
 def join_room(code):
-    mess = prepare_message(command='JOIN_CHANNEL',data='9Z1D')
+    mess = prepare_message(command='JOIN_CHANNEL',data=code)
     MAIN_SERVER_SOCKET.sendall(mess)
     headers, port = recv_msg_from_socket(MAIN_SERVER_SOCKET)
     print(headers, port)
     if headers.get(status_header_code) == "SUCC":
+        global GAME_JOIN_CODE
+        GAME_JOIN_CODE = code
         start_the_game(int(port))
         logging.info('TODO - próba dołączenia do  room')
     else:
         logging.info('TODO - Error podczas dołączania do room ')
+        raise "Join during joinning to room"
 
 
 def draw_update_function_join_status_button(widget, menu):

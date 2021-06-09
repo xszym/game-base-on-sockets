@@ -55,7 +55,6 @@ class Player(pygame.sprite.Sprite):
             self.health_bar = pygame.Rect(0, 0, self.rect.width, 7)
             return pygame.draw.rect(self.surf, color, self.health_bar)
 
-
     def rotate_to_angle(self, _angle):
         if _angle != self.angle:
             angle_delta = _angle - self.angle
@@ -63,12 +62,14 @@ class Player(pygame.sprite.Sprite):
             self.angle = _angle
 
     def colide_dection_bullet(self, bullets):
+        was_collide = False
         for bullet in bullets:
             if self.rect.colliderect(bullet):
                 self.health = self.health - 1
+                self.health = max(self.health, 0)
                 bullet.kill()
-                return True
-        return False
+                was_collide = True
+        return was_collide
 
     def colide_dection_other_player(self, other_players):
         for other_player in other_players:
@@ -117,8 +118,6 @@ class Player(pygame.sprite.Sprite):
             elif self.angle == 270:
                 new_Bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
             bullets.add(new_Bullet)
-
-        
 
         if self.rect.left < 0:
             self.rect.left = 0

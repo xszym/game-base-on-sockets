@@ -50,7 +50,7 @@ def decode_msg_header(recv_data):
         key = row.split(":", 1)[0]
         val = row.split(":", 1)[1]
         data_values[key] = val
-        if key == 'Data':
+        if key == data_header_code:
             break
     return data_values
 
@@ -71,7 +71,7 @@ def prepare_message(command=None, status=None, auth=None, data=''):
     if len(header_msg) > 0: header_msg += soft_end
     header_msg += lenght_header_code + ":" + str(len(str(data)))
 
-    mess = header_msg + soft_end + "Data:" + str(data) + hard_end
+    mess = header_msg + soft_end + data_header_code + ":" + str(data) + hard_end
     return mess.encode('utf-8') 
 
 
@@ -81,7 +81,7 @@ def recv_msg_from_socket(sock):
         data_rec = data_rec + sock.recv(1)
 
     headers = decode_msg_header(data_rec)
-    data = headers['Data']
+    data = headers[data_header_code]
     return headers, data
 
 
@@ -92,8 +92,11 @@ def recv_from_socket_to_pointer(_socket, value):
 
 
 def send_to_socket_from_pointer(_socket, value):
+    last_send_value = ''
     while True:
-        newest_data = value[0]
-        if newest_data != '':
-            _socket.send(newest_data)
-        sleep(1/30)
+        if last_send_value != value[0]:
+            newest_data = value[0]
+            if newest_data != '':
+                _socket.send(newest_data)
+            last_send_value = newest_data
+        sleep(1/20)
