@@ -99,17 +99,15 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 - [x] Kolizja pomiędzy czołgami 
 - [x] Kolizja z pociskiem
 - [x] Życie
-- [ ] END GAME
-- [ ] START_GAME od hosta
-- [ ] Pokazywanie ilośći połączonych graczy
-- [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
-- [ ] Nickname wysyłać od klienta i przypisać go do playera
+- [x] END GAME
 - [x] Odkomendować wiele roomów 
 - [x] Join do serwera po Kodzie
-- [ ] Pokazywanie roomów 
 - [x] Serwer zdarzeniowy
-- [ ] Testy i obsługa błędów
 - [x] Serduszka nad graczami 
+- [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
+- [ ] Nickname wysyłać od klienta i przypisać go do playera
+- [ ] Pokazywanie roomów 
+- [ ] Testy i obsługa błędów
 
 
 # Bugs
