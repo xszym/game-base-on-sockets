@@ -34,6 +34,7 @@ def get_port_of_socket(sock):
 
 
 def open_new_connection(port=0):
+    sock = None
     if port == 0:
         while True:
             try:
@@ -72,9 +73,6 @@ class PlayerProfil():
 
     def __del__(self):
         self.socket.close()
-        # TODO pop from tank game 
-        # self.recv_from_thread.exit()
-        # self.send_to_thread.exit()
 
 
 class TankGame():
@@ -100,13 +98,11 @@ class TankGame():
                 no_of_connections += 1
         return no_of_connections
         
-    
-    def send_no_of_connected_players(self):
-        # TODO - Send ilosc podlaczonych graczy
-        no_of_players = len(self.connected_players)
-        msg = prepare_message(command='UPDATE_CHANNEL',data=no_of_players)
-        for p in self.connected_players:
-            p.socket.sendall()
+    # def send_no_of_connected_players(self):
+    #     no_of_players = len(self.connected_players)
+    #     msg = prepare_message(command='UPDATE_CHANNEL',data=no_of_players)
+    #     for p in self.connected_players:
+    #         p.socket.sendall()
     
     def accept_new_client(self):
         client, addr = self.socket.accept()
@@ -129,7 +125,6 @@ class TankGame():
         accept_new_players_thread.start()
         self.accept_new_players_thread = accept_new_players_thread
         self.is_game_started = True
-        # TODO - send_no_of_connected_players(self)
         self.status = "BUSY"
 
     def __del__(self):

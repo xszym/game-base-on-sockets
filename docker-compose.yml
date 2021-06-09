@@ -8,5 +8,5 @@ services:
       - .env
     ports:
       - "${PORT}:${PORT}"
-      - "50000-50100:50000-50100"
+      - "40100-40150:40100-40150"
     command: ["python3", "server.py"]
