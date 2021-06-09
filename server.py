@@ -122,7 +122,7 @@ class TankGame():
             logging.info("Delete game " + self.join_code)
         except KeyError:
             logging.exception("AVAILABLE_GAMES pop fails")
-            
+
         self.socket.close()
 
 
@@ -154,20 +154,23 @@ def game_loop(tank_game):
             else:
                 pressed_keys = pygame.key.get_pressed()
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
-            
-            if player_profile.player_game_object.health < 1:
-                msg = prepare_message(command='GAME_OVER',status='SUCC',data=objects_positions)
-                player_profile.send_to_newest_value[0] = msg
                 
         bullets.update()
 
         objects_positions = serialize_game_objects(players_objects, bullets)
         msg = prepare_message(command='UPDATE_GAME',status='SUCC',data=objects_positions)
         
+        no_alive_players = sum([min(v.player_game_object.health, 1) for k, v in tank_game.connected_players.items()])
+        if no_alive_players == 0:
+            print("Running")
+            running = False
+
         for key, player_profile in tank_game.connected_players.items():
             if player_profile.player_game_object.health > 0:
                 player_profile.send_to_newest_value[0] = msg
-
+            else:
+                msg = prepare_message(command='GAME_OVER',status='SUCC',data=objects_positions)
+                player_profile.send_to_newest_value[0] = msg
         clock.tick(30)
 
     del tank_game

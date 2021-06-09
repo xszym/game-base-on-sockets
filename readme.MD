@@ -115,4 +115,4 @@ https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-
 - [ ] Możliwość sepownowania dwóch czołgów w tym samym miejscu (ekran podzielony na 4 czesci, w zaleznosci od nr gracza w innej czesci sie spawnuje) 
 - [ ] Małe prawdopodobieństwo spawnu na innym graczu 
 - [ ] Dead jest przekręcone przy śmieci 
-
+- [ ] Po wyjściu wszystkich z gry - niech player cały czas żyje, a gra cały czas trwa
