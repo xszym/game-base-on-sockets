@@ -1,7 +1,17 @@
-name: first-github-action
+name: Deploy
+
 on: [push]
+
 jobs:
-  write-to-console:
-    runs-on: ubuntu-latest
+  deploy:
+    if: github.ref == 'refs/heads/master'
+    runs-on: [ubuntu-latest]
     steps:
-      - run: echo 'Hello world!'
+      - uses: actions/checkout@v1
+      - name: Push to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.ID_RSA }}
+          script: cd game-base-on-sockets && git pull
