@@ -22,7 +22,8 @@ from pygame.locals import (
 
 from src.config import *
 from src.game_classes import Player, Bullet
-from src.utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes, recv_from_socket_to_pointer, send_to_socket_from_pointer, ordinal
+from src.seriazlizers import serialize_game_objects
+from src.utils import decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes, recv_from_socket_to_pointer, send_to_socket_from_pointer, ordinal
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
@@ -98,12 +99,6 @@ class TankGame():
                 no_of_connections += 1
         return no_of_connections
         
-    # def send_no_of_connected_players(self):
-    #     no_of_players = len(self.connected_players)
-    #     msg = prepare_message(command='UPDATE_CHANNEL',data=no_of_players)
-    #     for p in self.connected_players:
-    #         p.socket.sendall()
-    
     def accept_new_client(self):
         client, addr = self.socket.accept()
         print("Connected: " + addr[0] + " to game " + self.join_code)
@@ -128,12 +123,6 @@ class TankGame():
         self.status = "BUSY"
 
     def __del__(self):
-        # global AVAILABLE_GAMES
-        # del AVAILABLE_GAMES[self.join_code]
-        # print("Delete game " + self.join_code)
-        # for key, player_profile in tank_game.connected_players.items():
-        #     player_profile.send_to_newest_value[0] = None
-
         self.socket.close()
 
 

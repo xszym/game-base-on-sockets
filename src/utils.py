@@ -21,29 +21,6 @@ def current_milliseconds():
     return round(time() * 1000)
 
 
-def serialize_game_objects(players, bullets):
-    response_models = []
-    for entity in bullets:
-        entity_temp = {
-            "type": "bullet",
-            "centerx": entity.rect.centerx,
-            "centery":  entity.rect.centery,
-            "angle":  entity.angle
-        }
-        response_models.append(entity_temp)
-    for entity in players:
-        entity_temp = {
-            "type": "player",
-            "nickname": entity.nickname,
-            "centerx": entity.rect.centerx,
-            "centery":  entity.rect.centery,
-            "angle":  entity.angle,
-            "health": entity.health
-        }
-        response_models.append(entity_temp)
-    return json.dumps(response_models)
-
-
 def decode_msg_header(recv_data):
     data_rec = recv_data.decode('utf-8')
     data_rec = data_rec.split('\r\n\r\n')[0]
@@ -111,7 +88,7 @@ def send_to_socket_from_pointer(_socket, value):
                     _socket.send(newest_data)
                 last_send_value = newest_data
                 last_update_millis = now_millis
-            sleep(1/25)
+            sleep(1/20)
         except:
             print("Breaked connection on port")
             break

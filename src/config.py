@@ -28,7 +28,6 @@ K_ESCAPE = 41
 
 
 ### SOCKETS / NETWORK ###
-
 MAIN_SERVER_SOCKET_PORT = int(os.environ.get('PORT', default=40000))
 MIN_PORT=40400
 MAX_PORT=40420

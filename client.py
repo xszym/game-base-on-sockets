@@ -32,6 +32,7 @@ from pygame.locals import (
 
 from src.config import *
 from src.game_classes import Player, Bullet
+from src.seriazlizers import deserialize_game_objects
 from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to_pointer, send_to_socket_from_pointer
 
 
@@ -76,26 +77,6 @@ GAME_JOIN_CODE = ''
 
 # pygame.mixer.music.stop()
 # pygame.mixer.quit()
-
-
-def deserialize_game_objects(msg):
-    recived_objects = json.loads(msg)
-    entities = []
-    for recived_object in recived_objects:
-        if recived_object['type'] == 'bullet':
-            entity = Bullet(recived_object['centerx'], 
-                            recived_object['centery'], 
-                            recived_object['angle'])
-            entities.append(entity)
-        elif recived_object['type'] == 'player':
-            entity = Player(recived_object['nickname'], 
-                            recived_object['centerx'], 
-                            recived_object['centery'], 
-                            recived_object['angle'],
-                            recived_object['health']
-                            )
-            entities.append(entity)
-    return entities
 
 
 def start_the_game(port):
