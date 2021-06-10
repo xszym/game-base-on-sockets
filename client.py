@@ -146,7 +146,7 @@ def create_menu_main():
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     return main_menu
     
-
+AVAILABLE_GAMES = [('', '')]
 def create_menu_join():
     join_menu = pygame_menu.Menu(
         height=WINDOW_SIZE[0],
@@ -157,9 +157,36 @@ def create_menu_join():
 
     join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
     join_status_button = join_menu.add.button('Status: Insert code', None)
+    # join_menu.add.button('List games', list_games)
+    game_selector = join_menu.add.selector('Select game ',
+                    AVAILABLE_GAMES,
+                    onchange=list_games,
+                    onreturn=join_room,
+                    selector_id='select_difficulty')
     join_menu.add.button('Main menu', pygame_menu.events.BACK)
     join_status_button.add_draw_callback(draw_update_function_join_status_button)
+    game_selector.add_draw_callback(draw_update_function_games_list_selector)
     return join_menu
+
+
+def list_games(_=None, __=None):
+    # print(x, y)
+    mess = prepare_message(command='LIST_GAMES')
+    try:
+        MAIN_SERVER_SOCKET.sendall(mess)
+    except:
+        connect_to_main_server()
+        MAIN_SERVER_SOCKET.sendall(mess)
+    
+    headers, games = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    global AVAILABLE_GAMES
+    games = eval(games)
+    games = [(g, g) for g in games]
+    if len(games) > 0:
+        AVAILABLE_GAMES = games
+    else: 
+        AVAILABLE_GAMES = [('', '')]
+    print("AVAILABLE_GAMES", AVAILABLE_GAMES)
 
 
 join_status = 'Insert room key'
@@ -176,7 +203,10 @@ def update_join_status(code):
             join_status = 'Joining fail :('
 
 
-def join_room(code):
+def join_room(code, _=None):
+    print("code", type(code))
+    if isinstance(code, tuple):
+        code = code[0][0]
     mess = prepare_message(command='JOIN_CHANNEL',data=code)
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
@@ -191,13 +221,22 @@ def join_room(code):
         GAME_JOIN_CODE = code
         start_the_game(int(port))
     else:
+        global join_status 
+        join_status = 'Joining fail :('
         logging.info('TODO - Error podczas dołączania do room ')
-        raise "Join during joinning to room"
+        # raise "Error during joinning to room"
 
 
 def draw_update_function_join_status_button(widget, menu):
     global join_status
     widget.set_title(join_status)
+
+
+def draw_update_function_games_list_selector(widget, menu):
+    global AVAILABLE_GAMES
+    # main_menu.full_reset()
+
+    widget.update_items(AVAILABLE_GAMES)
 
 
 def create_menu_about():

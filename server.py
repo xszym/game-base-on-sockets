@@ -238,6 +238,7 @@ class TankGameServerProtocol(asyncio.Protocol):
 
         for msg in msgs:
             try:
+                global AVAILABLE_GAMES
                 headers = decode_msg_header(msg)
                 command = headers.get(command_header_code)
 
@@ -254,13 +255,16 @@ class TankGameServerProtocol(asyncio.Protocol):
                     msg = prepare_message(command='START_CHANNEL',status='SUCC', data=join_code)
                     self.transport.write(msg)
                 elif command == 'JOIN_CHANNEL':
-                    global AVAILABLE_GAMES
+                    # global AVAILABLE_GAMES
                     print(AVAILABLE_GAMES.keys())
                     join_code = headers.get('Data')
                     if join_code in AVAILABLE_GAMES:
                         mess = prepare_message(command='JOIN_CHANNEL', status='SUCC', data=str(AVAILABLE_GAMES[join_code].port)) 
                     else:
                         mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS') 
+                    self.transport.write(mess)
+                elif command == 'LIST_GAMES':
+                    mess = prepare_message(command='LIST_GAMES', status='SUCC', data=str(list(AVAILABLE_GAMES.keys()))) 
                     self.transport.write(mess)
                 elif command == 'QUIT GAME':
                     mess = prepare_message('GAME_QUIT','SUCC','')
