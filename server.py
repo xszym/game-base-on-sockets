@@ -22,7 +22,7 @@ from pygame.locals import (
 
 from src.config import *
 from src.game_classes import Player, Bullet
-from src.utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes, recv_from_socket_to_pointer, send_to_socket_from_pointer
+from src.utils import serialize_game_objects, decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes, recv_from_socket_to_pointer, send_to_socket_from_pointer, ordinal
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 
 
@@ -182,16 +182,16 @@ def game_loop(tank_game):
         for key, player_profile in tank_game.connected_players.items():
             if running == False:
                 if player_profile.player_game_object.health > 0:
-                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=no_alive_players)
+                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=ordinal(no_alive_players))
                     player_profile.send_to_newest_value[0] = msg
                 else:
-                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=no_alive_players+1)
+                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=ordinal(no_alive_players+1))
                     player_profile.send_to_newest_value[0] = msg
             else: 
                 if player_profile.player_game_object.health > 0:
                     player_profile.send_to_newest_value[0] = msg_update_game
                 else:
-                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=no_alive_players+1)
+                    msg = prepare_message(command='GAME_OVER',status='SUCC',data=ordinal(no_alive_players+1))
                     player_profile.send_to_newest_value[0] = msg
 
         clock.tick(30)

@@ -123,11 +123,9 @@ def start_the_game(port):
             PLAYER_POSITIONS = None
             if recv_from_last_value[0] != '':
                 MSG_FROM_SERVER = recv_from_last_value[0]
-                # TODO - IF MSG GAME OVER end game
                 headers = MSG_FROM_SERVER[0]
                 
                 if headers[command_header_code] == 'GAME_OVER':
-                    # running = False
                     is_game_over = True
                     player_place = MSG_FROM_SERVER[1]
                 elif headers[command_header_code] == 'UPDATE_GAME':

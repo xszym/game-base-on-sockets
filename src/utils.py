@@ -7,6 +7,9 @@ from time import sleep, time
 from src.config import *
 
 
+ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
+
+
 def convert_string_to_bytes(string):
     bytes = b''
     for i in string:
