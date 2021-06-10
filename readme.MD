@@ -78,7 +78,8 @@ Rodzaje wiadmości:
 
 ## Run
 - ```python server.py```
-- ```python client.py```
+- ```python client.py -L``` for local server
+- ```python client.py``` for public server
 
 
 ## Links 

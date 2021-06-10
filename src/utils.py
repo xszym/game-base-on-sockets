@@ -105,13 +105,13 @@ def send_to_socket_from_pointer(_socket, value):
             now_millis = current_milliseconds()
             if value[0] == None:
                 break
-            if last_send_value != value[0] or now_millis - last_update_millis > 1000 :
+            if last_send_value != value[0] or now_millis - last_update_millis > 1000:
                 newest_data = value[0]
                 if newest_data != '':
                     _socket.send(newest_data)
                 last_send_value = newest_data
                 last_update_millis = now_millis
-            sleep(1/20)
+            sleep(1/25)
         except:
             print("Breaked connection on port")
             break

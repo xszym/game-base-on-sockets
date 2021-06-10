@@ -10,6 +10,7 @@ import threading
 import socket
 from queue import Queue
 
+import sys
 import json
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +36,15 @@ from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to
 
 
 MAIN_SERVER_SOCKET = None
+IS_LOCAL = False
+if '-L' in sys.argv[1:]:
+    IS_LOCAL = True
+
+if IS_LOCAL:
+    SERVER_IP = '0.0.0.0'
+else:
+    SERVER_IP = os.environ.get('SERVER_IP', default='159.89.9.110')
+
 
 def connect_to_main_server():
     global MAIN_SERVER_SOCKET
