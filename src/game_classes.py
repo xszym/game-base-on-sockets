@@ -1,7 +1,7 @@
 import pygame
 import math
 import random
-from random import randrange
+from random import randrange, gauss
 import logging
 import time
 logging.basicConfig(level=logging.INFO)
@@ -12,7 +12,7 @@ from pygame.locals import (
 )
 
 from src.config import *
-
+from src.utils import current_milliseconds
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, nickname, x, y, angle, health=DEFAULT_PLAYER_HEALTH, connected_players_profiles=None):
@@ -158,15 +158,6 @@ class Bullet(pygame.sprite.Sprite):
         self.angle = angle
 
     def update(self):
-        if self.angle == 0:
-            self.rect.move_ip(0, self.speed)
-        elif self.angle == 90:
-            self.rect.move_ip(self.speed, 0)
-        elif self.angle == 180:
-            self.rect.move_ip(0, -self.speed)
-        elif self.angle == 270:
-            self.rect.move_ip(-self.speed, 0)
-
         if self.rect.left < 0:
             self.kill()
         elif self.rect.right > SCREEN_WIDTH:
@@ -175,3 +166,14 @@ class Bullet(pygame.sprite.Sprite):
             self.kill()
         elif self.rect.bottom >= SCREEN_HEIGHT:
             self.kill()
+
+        bullet_offset = gauss(0, BULLET_GAUSS_SIGMA)
+        # bullet_offset = randrange(-10, 10)
+        if self.angle == 0:
+            self.rect.move_ip(bullet_offset, self.speed)
+        elif self.angle == 90:
+            self.rect.move_ip(self.speed, bullet_offset)
+        elif self.angle == 180:
+            self.rect.move_ip(bullet_offset, -self.speed)
+        elif self.angle == 270:
+            self.rect.move_ip(-self.speed, bullet_offset)

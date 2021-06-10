@@ -22,7 +22,7 @@ from pygame.locals import (
 
 from src.config import *
 from src.game_classes import Player, Bullet
-from src.seriazlizers import serialize_game_objects
+from src.serializers import serialize_game_objects
 from src.utils import decode_msg_header, prepare_message, recv_msg_from_socket, convert_string_to_bytes, recv_from_socket_to_pointer, send_to_socket_from_pointer, ordinal
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 

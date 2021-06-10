@@ -32,7 +32,7 @@ from pygame.locals import (
 
 from src.config import *
 from src.game_classes import Player, Bullet
-from src.seriazlizers import deserialize_game_objects
+from src.serializers import deserialize_game_objects
 from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to_pointer, send_to_socket_from_pointer
 
 

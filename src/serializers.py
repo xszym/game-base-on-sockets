@@ -1,4 +1,5 @@
 import json
+from src.game_classes import Player, Bullet
 
 
 def serialize_game_objects(players, bullets):
