@@ -11,7 +11,7 @@ from pygame.locals import (
     QUIT,
 )
 from src.config import *
-from src.serializers import deserialize_game_objects
+from src.serializers import deserialize_game_objects, map_pressed_keys_to_list
 from src.utils import prepare_standard_msg, recv_msg_from_socket, recv_from_socket_to_pointer, \
     send_to_socket_from_pointer, decode_status_msg, prepare_game_msg
 
@@ -82,6 +82,7 @@ def start_the_game(port):
             screen.blit(textsurface, (int(SCREEN_WIDTH / 2), int(SCREEN_HEIGHT / 2)))
         else:
             pressed_keys = pygame.key.get_pressed()
+            pressed_keys = map_pressed_keys_to_list(pressed_keys)
             dumped_pressed_keys = json.dumps(pressed_keys)
             msg = prepare_game_msg(dumped_pressed_keys)
             send_to_newest_value[0] = msg
