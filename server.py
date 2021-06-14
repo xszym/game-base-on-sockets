@@ -8,6 +8,7 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from random import randrange
+from time import sleep
 
 import pygame
 from src.config import *
@@ -15,7 +16,6 @@ from src.game_classes import Player
 from src.serializers import serialize_game_objects
 from src.utils import decode_standard_msg, recv_from_socket_to_pointer, send_to_socket_from_pointer, \
     ordinal, prepare_status_msg, prepare_game_msg
-
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 AVAILABLE_GAMES = {}
@@ -41,7 +41,7 @@ def open_new_connection(port=0):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
         sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
-    print("Starting new connection at port", get_port_of_socket(sock))
+    logging.info("Starting new connection at port", get_port_of_socket(sock))
     return sock
 
 
@@ -94,7 +94,7 @@ class TankGame():
 
     def accept_new_client(self):
         client, addr = self.socket.accept()
-        print("Connected: " + addr[0] + " to game " + self.join_code)
+        logging.info("Connected: " + addr[0] + " to game " + self.join_code)
         new_player_profile = PlayerProfil(client, self.connected_players)
         self.connected_players[client] = new_player_profile  # TODO - change key from client to auth
         return new_player_profile
@@ -116,11 +116,6 @@ class TankGame():
 
     def __del__(self):
         self.socket.close()
-
-
-def decode_json_data(msg):
-    msg = msg[1]
-    return json.loads(msg)
 
 
 def game_loop(tank_game):
@@ -145,8 +140,6 @@ def game_loop(tank_game):
         for key, player_profile in tank_game.connected_players.items():
             pressed_keys = player_profile.recv_from_last_value[0]
             if pressed_keys != '':
-                pressed_keys = decode_json_data(pressed_keys)
-                print(pressed_keys)
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
             else:
                 pressed_keys = pygame.key.get_pressed()
@@ -161,20 +154,21 @@ def game_loop(tank_game):
             running = False
 
         for key, player_profile in tank_game.connected_players.items():
-            if running:
+            if not running:
                 if player_profile.player_game_object.health > 0:
-                    player_profile.send_to_newest_value[0] = msg_update_game
+                    msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players)]))
+                    player_profile.send_to_newest_value[0] = msg
                 else:
-                    msg = prepare_game_msg(prepare_game_msg('GAME_OVER,' + ordinal(no_alive_players + 1)))
+                    msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players + 1)]))
                     player_profile.send_to_newest_value[0] = msg
             else:
                 if player_profile.player_game_object.health > 0:
-                    msg = prepare_game_msg(prepare_game_msg('GAME_OVER,' + ordinal(no_alive_players)))
-                    player_profile.send_to_newest_value[0] = msg
+                    player_profile.send_to_newest_value[0] = msg_update_game
                 else:
-                    msg = prepare_game_msg(prepare_game_msg('GAME_OVER,' + ordinal(no_alive_players + 1)))
+                    msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players + 1)]))
                     player_profile.send_to_newest_value[0] = msg
         clock.tick(30)
+    # sleep(1)
     global AVAILABLE_GAMES
     del AVAILABLE_GAMES[tank_game.join_code]
     del tank_game
@@ -208,7 +202,7 @@ class MainGameServerProtocol(asyncio.Protocol):
         self._rest = b''
         self.name = None
         clients.append(self)
-        print('Connection from {}'.format(self.addr))
+        logging.info('Connection from {}'.format(self.addr))
 
     def data_received(self, data):
         """ Handle data as it's received. Broadcast complete
@@ -261,7 +255,7 @@ class MainGameServerProtocol(asyncio.Protocol):
 
     def connection_lost(self, ex):
         """ Called on client disconnect. Clean up client state """
-        print('Client {} disconnected'.format(self.addr))
+        logging.info('Client {} disconnected'.format(self.addr))
         clients.remove(self)
 
 
@@ -273,7 +267,7 @@ server = loop.run_until_complete(coroutine)
 
 for s in server.sockets:
     addr = s.getsockname()
-    print('Listening on {}'.format(addr))
+    logging.info('Listening on {}'.format(addr))
 
 try:
     loop.run_forever()

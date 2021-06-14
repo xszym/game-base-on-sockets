@@ -85,8 +85,8 @@ def recv_from_socket_to_pointer(_socket, value):
     while True:
         try:
             data_rec = recv_msg_from_socket(_socket)
-            auth, game_data = decode_game_msg(data_rec)
-            value[0] = ([auth, game_data])
+            game_data = decode_game_msg(data_rec)
+            value[0] = game_data
         except:
             break
 

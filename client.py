@@ -15,7 +15,7 @@ from src.serializers import deserialize_game_objects
 from src.utils import prepare_standard_msg, recv_msg_from_socket, recv_from_socket_to_pointer, \
     send_to_socket_from_pointer, decode_status_msg, prepare_game_msg
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 MAIN_SERVER_SOCKET = None
 IS_LOCAL = False
@@ -82,17 +82,15 @@ def start_the_game(port):
             screen.blit(textsurface, (int(SCREEN_WIDTH / 2), int(SCREEN_HEIGHT / 2)))
         else:
             pressed_keys = pygame.key.get_pressed()
-            # dumped_pressed_keys = json.dumps(pressed_keys)
-            msg = prepare_game_msg(pressed_keys)
+            dumped_pressed_keys = json.dumps(pressed_keys)
+            msg = prepare_game_msg(dumped_pressed_keys)
             send_to_newest_value[0] = msg
 
             if recv_from_last_value[0] != '':
-                msg_from_server = recv_from_last_value[0]
-                game_data = msg_from_server
-
+                game_data = recv_from_last_value[0]
                 if 'GAME_OVER' in game_data:
                     is_game_over = True
-                    player_place = game_data.split(',')[1]
+                    player_place = game_data[1]
                 else:
                     player_positions = game_data
                     if player_positions is not None:
@@ -180,7 +178,6 @@ def update_join_status(code):
 
 
 def join_room(code, _=None):
-    print("code", type(code))
     if isinstance(code, tuple):
         code = code[0][0]
     mess = prepare_standard_msg(command='JOIN_CHANNEL', data=code)
@@ -192,6 +189,7 @@ def join_room(code, _=None):
 
     recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
     response = decode_status_msg(recv_data)
+
     if response['code'] == 200:
         port = response['data']
         start_the_game(int(port))
@@ -245,8 +243,8 @@ def host_game():
     recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
     response = decode_status_msg(recv_data)
     if response['code'] == 200:
-        port = response['data']
-        join_room(port)
+        code = response['data']
+        join_room(code)
     else:
         logging.info('TODO - Error during hosting')
         logging.error(f"Code {response['code']} with message {response['message']} ")
