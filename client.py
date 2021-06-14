@@ -88,7 +88,6 @@ def start_the_game(port):
             msg = prepare_message(command='UPDATE_GAME', data=dumped_pressed_keys)
             send_to_newest_value[0] = msg
 
-            PLAYER_POSITIONS = None
             if recv_from_last_value[0] != '':
                 MSG_FROM_SERVER = recv_from_last_value[0]
                 headers = MSG_FROM_SERVER[0]
@@ -97,9 +96,9 @@ def start_the_game(port):
                     is_game_over = True
                     player_place = MSG_FROM_SERVER[1]
                 elif headers[command_header_code] == 'UPDATE_GAME':
-                    PLAYER_POSITIONS = MSG_FROM_SERVER[1]
-                    if PLAYER_POSITIONS is not None:
-                        entities = deserialize_game_objects(PLAYER_POSITIONS)
+                    player_positions = MSG_FROM_SERVER[1]
+                    if player_positions is not None:
+                        entities = deserialize_game_objects(player_positions)
                         for entity in entities:
                             screen.blit(entity.surf, entity.rect)
 
@@ -134,7 +133,6 @@ def create_menu_join():
 
     join_menu.add.text_input('Room Key: ', default='', maxchar=4, onchange=update_join_status)
     join_status_button = join_menu.add.button('Status: Insert code', None)
-    # join_menu.add.button('List games', list_games)
     game_selector = join_menu.add.selector('Select game ',
                                            AVAILABLE_GAMES,
                                            onchange=list_games,
