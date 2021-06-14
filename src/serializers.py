@@ -1,5 +1,16 @@
 import json
 
+from pygame.locals import (
+    RLEACCEL,
+    K_UP,
+    K_DOWN,
+    K_LEFT,
+    K_RIGHT,
+    K_ESCAPE,
+    K_SPACE,
+    KEYDOWN,
+    QUIT,
+)
 from src.game_classes import Player, Bullet
 
 
@@ -27,9 +38,9 @@ def serialize_game_objects(players, bullets):
 
 
 def deserialize_game_objects(msg):
-    recived_objects = json.loads(msg)
     entities = []
-    for recived_object in recived_objects:
+    for recived_object in msg:
+        # recived_object = json.loads(recived_object)
         if recived_object['type'] == 'bullet':
             entity = Bullet(recived_object['centerx'],
                             recived_object['centery'],
@@ -44,3 +55,11 @@ def deserialize_game_objects(msg):
                             )
             entities.append(entity)
     return entities
+
+
+def map_pressed_keys_to_list(pressed_keys):
+    pygame_keys_ids = [K_UP, K_DOWN, K_LEFT, K_RIGHT, K_ESCAPE, K_SPACE]
+    result = [False] * len(pygame_keys_ids)
+    for i, key_id in enumerate(pygame_keys_ids):
+        result[i] = pressed_keys[key_id]
+    return result

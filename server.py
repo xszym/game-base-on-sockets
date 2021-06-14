@@ -8,15 +8,14 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from random import randrange
+from time import sleep
 
 import pygame
-
 from src.config import *
 from src.game_classes import Player
 from src.serializers import serialize_game_objects
-from src.utils import decode_msg_header, prepare_message, recv_from_socket_to_pointer, send_to_socket_from_pointer, \
-    ordinal
-
+from src.utils import decode_standard_msg, recv_from_socket_to_pointer, send_to_socket_from_pointer, \
+    ordinal, prepare_status_msg, prepare_game_msg
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 AVAILABLE_GAMES = {}
@@ -42,7 +41,7 @@ def open_new_connection(port=0):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
         sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
-    print("Starting new connection at port", get_port_of_socket(sock))
+    logging.info("Starting new connection at port", get_port_of_socket(sock))
     return sock
 
 
@@ -79,7 +78,6 @@ class TankGame():
         self.connected_players = {}
         self.port = get_port_of_socket(self.socket)
         self.is_game_started = False
-        self.status = "WAITING"
         self.was_two_players = False
 
         global AVAILABLE_GAMES
@@ -96,7 +94,7 @@ class TankGame():
 
     def accept_new_client(self):
         client, addr = self.socket.accept()
-        print("Connected: " + addr[0] + " to game " + self.join_code)
+        logging.info("Connected: " + addr[0] + " to game " + self.join_code)
         new_player_profile = PlayerProfil(client, self.connected_players)
         self.connected_players[client] = new_player_profile  # TODO - change key from client to auth
         return new_player_profile
@@ -115,15 +113,9 @@ class TankGame():
         accept_new_players_thread.start()
         self.accept_new_players_thread = accept_new_players_thread
         self.is_game_started = True
-        self.status = "BUSY"
 
     def __del__(self):
         self.socket.close()
-
-
-def decode_json_data(msg):
-    msg = msg[1]
-    return json.loads(msg)
 
 
 def game_loop(tank_game):
@@ -148,7 +140,6 @@ def game_loop(tank_game):
         for key, player_profile in tank_game.connected_players.items():
             pressed_keys = player_profile.recv_from_last_value[0]
             if pressed_keys != '':
-                pressed_keys = decode_json_data(pressed_keys)
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
             else:
                 pressed_keys = pygame.key.get_pressed()
@@ -156,27 +147,28 @@ def game_loop(tank_game):
         bullets.update()
 
         objects_positions = serialize_game_objects(players_objects, bullets)
-        msg_update_game = prepare_message(command='UPDATE_GAME', status='SUCC', data=objects_positions)
+        msg_update_game = prepare_game_msg(objects_positions)
 
         no_alive_players = sum([max(min(p.health, 1), 0) for p in players_objects])
         if no_alive_players == 1 and tank_game.was_two_players:
             running = False
 
         for key, player_profile in tank_game.connected_players.items():
-            if running:
+            if not running:
                 if player_profile.player_game_object.health > 0:
-                    player_profile.send_to_newest_value[0] = msg_update_game
+                    msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players)]))
+                    player_profile.send_to_newest_value[0] = msg
                 else:
-                    msg = prepare_message(command='GAME_OVER', status='SUCC', data=ordinal(no_alive_players + 1))
+                    msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players + 1)]))
                     player_profile.send_to_newest_value[0] = msg
             else:
                 if player_profile.player_game_object.health > 0:
-                    msg = prepare_message(command='GAME_OVER', status='SUCC', data=ordinal(no_alive_players))
-                    player_profile.send_to_newest_value[0] = msg
+                    player_profile.send_to_newest_value[0] = msg_update_game
                 else:
-                    msg = prepare_message(command='GAME_OVER', status='SUCC', data=ordinal(no_alive_players + 1))
+                    msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players + 1)]))
                     player_profile.send_to_newest_value[0] = msg
         clock.tick(30)
+    # sleep(1)
     global AVAILABLE_GAMES
     del AVAILABLE_GAMES[tank_game.join_code]
     del tank_game
@@ -196,7 +188,7 @@ def get_random_uuid_for_player():
 def parse_recv_data(data):
     """ Break up raw received data into messages, delimited
         by null byte """
-    parts = data.split(b'\r\n\r\n')
+    parts = data.split(hard_end.encode())
     msgs = parts[:-1]
     rest = parts[-1]
     return (msgs, rest)
@@ -210,7 +202,7 @@ class MainGameServerProtocol(asyncio.Protocol):
         self._rest = b''
         self.name = None
         clients.append(self)
-        print('Connection from {}'.format(self.addr))
+        logging.info('Connection from {}'.format(self.addr))
 
     def data_received(self, data):
         """ Handle data as it's received. Broadcast complete
@@ -222,47 +214,48 @@ class MainGameServerProtocol(asyncio.Protocol):
         for msg in msgs:
             try:
                 global AVAILABLE_GAMES
-                headers = decode_msg_header(msg)
+                headers = decode_standard_msg(msg)
                 command = headers.get(command_header_code)
 
                 # TODO - Check if auth and auth correct ;) 
 
                 if command == 'REGISTER':
                     login = get_random_uuid_for_player()
-                    mess = prepare_message(command='REGISTER', status='SUCC', data=login)
-                    self.transport.write(mess)
+                    response_mess = prepare_status_msg(200, message='Success', data=login)
+                    self.transport.write(response_mess)
                     # TODO - Zpisywanie do plaintext zarejstrowanych USSID
                     # mess = prepare_message(command='REGISTER',status='ERR')
                 elif command == 'START_CHANNEL':
-                    join_code = start_the_game()
-                    msg = prepare_message(command='START_CHANNEL', status='SUCC', data=join_code)
-                    self.transport.write(msg)
+                    try:
+                        join_code = start_the_game()
+                        response_mess = prepare_status_msg(200, message='Success', data=join_code)
+                    except:
+                        response_mess = prepare_status_msg(400, message='Fail')
+                    self.transport.write(response_mess)
                 elif command == 'JOIN_CHANNEL':
-                    # global AVAILABLE_GAMES
-                    print(AVAILABLE_GAMES.keys())
                     join_code = headers.get('Data')
                     if join_code in AVAILABLE_GAMES:
-                        mess = prepare_message(command='JOIN_CHANNEL', status='SUCC',
-                                               data=str(AVAILABLE_GAMES[join_code].port))
+                        mess = prepare_status_msg(200, message='Success',
+                                                  data=str(AVAILABLE_GAMES[join_code].port))
                     else:
-                        mess = prepare_message(command='JOIN_CHANNEL', status='ERR', data='GAME NOT EXITS')
+                        mess = prepare_status_msg(400, message='Fail')
                     self.transport.write(mess)
                 elif command == 'LIST_GAMES':
-                    mess = prepare_message(command='LIST_GAMES', status='SUCC', data=str(list(AVAILABLE_GAMES.keys())))
+                    mess = prepare_status_msg(200, message='Success', data=str(list(AVAILABLE_GAMES.keys())))
                     self.transport.write(mess)
                 elif command == 'QUIT GAME':
-                    mess = prepare_message('GAME_QUIT', 'SUCC', '')
+                    mess = prepare_status_msg(200, message='Success')
                     self.transport.write(mess)
                 else:
-                    mess = prepare_message('INVALID COMMAND', 'ERR', '')
+                    mess = prepare_status_msg(400, message='Invalid command')
                     self.transport.write(mess)
             except:
-                mess = prepare_message('INVALID COMMAND', 'ERR', '')
+                mess = prepare_status_msg(400, message='Invalid command')
                 self.transport.write(mess)
 
     def connection_lost(self, ex):
         """ Called on client disconnect. Clean up client state """
-        print('Client {} disconnected'.format(self.addr))
+        logging.info('Client {} disconnected'.format(self.addr))
         clients.remove(self)
 
 
@@ -274,7 +267,7 @@ server = loop.run_until_complete(coroutine)
 
 for s in server.sockets:
     addr = s.getsockname()
-    print('Listening on {}'.format(addr))
+    logging.info('Listening on {}'.format(addr))
 
 try:
     loop.run_forever()
