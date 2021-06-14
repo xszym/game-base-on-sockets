@@ -40,7 +40,6 @@ def serialize_game_objects(players, bullets):
 def deserialize_game_objects(msg):
     entities = []
     for recived_object in msg:
-        # recived_object = json.loads(recived_object)
         if recived_object['type'] == 'bullet':
             entity = Bullet(recived_object['centerx'],
                             recived_object['centery'],

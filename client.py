@@ -56,6 +56,7 @@ pygame.mixer.music.set_volume(0.1)
 
 
 def start_the_game(port):
+    print(port)
     running = True
     is_game_over = False
     player_place = 'No place'
