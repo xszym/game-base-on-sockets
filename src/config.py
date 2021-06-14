@@ -7,6 +7,12 @@ import pygame_menu
 ABOUT = ['Authors: Dorota i Szymon',
          'PAS 2021']
 MENU_THEME = pygame_menu.themes.THEME_DARK
+FONT_NAME = 'Comic Sans MS'
+
+# Sound source: http://ccmixter.org/files/Apoxode/59262
+# License: https://creativecommons.org/licenses/by/3.0/
+BACKGROUND_MUSIC_FILE_NAME = "media/Apoxode_-_Electric_1.ogg"
+
 
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
@@ -29,9 +35,11 @@ K_SPACE = 44
 K_ESCAPE = 41
 
 # SOCKETS / NETWORK
+PUBLIC_SERVER_IP = '159.89.9.110'
 MAIN_SERVER_SOCKET_PORT = int(os.environ.get('PORT', default=40000))
 MIN_PORT = 40400
-MAX_PORT = 40420
+MAX_PORT = 40690
+MAX_TIME_WITH_NO_SEND_TO_SOCKET_IN_GAME_IN_MILLIS = 1000
 
 RECV_BUFFOR_SIZE = 1
 SERVER_NO_OF_QUEUED_CONNECTIONS = 5

@@ -10,10 +10,10 @@ from pygame.locals import (
     KEYDOWN,
     QUIT,
 )
-
 from src.config import *
 from src.serializers import deserialize_game_objects
-from src.utils import prepare_message, recv_msg_from_socket, recv_from_socket_to_pointer, send_to_socket_from_pointer
+from src.utils import prepare_standard_msg, recv_msg_from_socket, recv_from_socket_to_pointer, \
+    send_to_socket_from_pointer, decode_status_msg, prepare_game_msg
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,7 +25,7 @@ if '-L' in sys.argv[1:]:
 if IS_LOCAL:
     SERVER_IP = '0.0.0.0'
 else:
-    SERVER_IP = os.environ.get('SERVER_IP', default='159.89.9.110')
+    SERVER_IP = os.environ.get('SERVER_IP', default=PUBLIC_SERVER_IP)
 
 
 def connect_to_main_server():
@@ -42,7 +42,7 @@ connect_to_main_server()
 pygame.mixer.init()
 pygame.init()
 pygame.font.init()
-myfont = pygame.font.SysFont('Comic Sans MS', 30)
+myfont = pygame.font.SysFont(FONT_NAME, 30)
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -50,9 +50,7 @@ GAME_JOIN_CODE = ''
 join_status = 'Insert room key'
 AVAILABLE_GAMES = [('', '')]
 
-# Sound source: http://ccmixter.org/files/Apoxode/59262
-# License: https://creativecommons.org/licenses/by/3.0/
-pygame.mixer.music.load("media/Apoxode_-_Electric_1.ogg")
+pygame.mixer.music.load(BACKGROUND_MUSIC_FILE_NAME)
 pygame.mixer.music.play(loops=-1)
 pygame.mixer.music.set_volume(0.1)
 
@@ -84,19 +82,19 @@ def start_the_game(port):
             screen.blit(textsurface, (int(SCREEN_WIDTH / 2), int(SCREEN_HEIGHT / 2)))
         else:
             pressed_keys = pygame.key.get_pressed()
-            dumped_pressed_keys = json.dumps(pressed_keys)
-            msg = prepare_message(command='UPDATE_GAME', data=dumped_pressed_keys)
+            # dumped_pressed_keys = json.dumps(pressed_keys)
+            msg = prepare_game_msg(pressed_keys)
             send_to_newest_value[0] = msg
 
             if recv_from_last_value[0] != '':
-                MSG_FROM_SERVER = recv_from_last_value[0]
-                headers = MSG_FROM_SERVER[0]
+                msg_from_server = recv_from_last_value[0]
+                game_data = msg_from_server
 
-                if headers[command_header_code] == 'GAME_OVER':
+                if 'GAME_OVER' in game_data:
                     is_game_over = True
-                    player_place = MSG_FROM_SERVER[1]
-                elif headers[command_header_code] == 'UPDATE_GAME':
-                    player_positions = MSG_FROM_SERVER[1]
+                    player_place = game_data.split(',')[1]
+                else:
+                    player_positions = game_data
                     if player_positions is not None:
                         entities = deserialize_game_objects(player_positions)
                         for entity in entities:
@@ -145,22 +143,27 @@ def create_menu_join():
 
 
 def list_games(_=None, __=None):
-    mess = prepare_message(command='LIST_GAMES')
+    mess = prepare_standard_msg(command='LIST_GAMES')
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
     except:
         connect_to_main_server()
         MAIN_SERVER_SOCKET.sendall(mess)
 
-    headers, games = recv_msg_from_socket(MAIN_SERVER_SOCKET)
-    global AVAILABLE_GAMES
-    games = eval(games)
-    games = [(g, g) for g in games]
-    if len(games) > 0:
-        AVAILABLE_GAMES = games
+    recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    response = decode_status_msg(recv_data)
+    if response['code'] == 200:
+        global AVAILABLE_GAMES
+        games = response.get('data', '[]')
+        games = eval(games)
+        games = [(g, g) for g in games]
+        if len(games) > 0:
+            AVAILABLE_GAMES = games
+        else:
+            AVAILABLE_GAMES = [('', '')]
+        logging.debug("AVAILABLE_GAMES", AVAILABLE_GAMES)
     else:
-        AVAILABLE_GAMES = [('', '')]
-    logging.debug("AVAILABLE_GAMES", AVAILABLE_GAMES)
+        logging.error(f"Code {response['code']} with message {response['message']} ")
 
 
 def update_join_status(code):
@@ -180,22 +183,23 @@ def join_room(code, _=None):
     print("code", type(code))
     if isinstance(code, tuple):
         code = code[0][0]
-    mess = prepare_message(command='JOIN_CHANNEL', data=code)
+    mess = prepare_standard_msg(command='JOIN_CHANNEL', data=code)
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
     except:
         connect_to_main_server()
         MAIN_SERVER_SOCKET.sendall(mess)
 
-    headers, port = recv_msg_from_socket(MAIN_SERVER_SOCKET)
-    if headers.get(status_header_code) == "SUCC":
-        global GAME_JOIN_CODE
-        GAME_JOIN_CODE = code
+    recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    response = decode_status_msg(recv_data)
+    if response['code'] == 200:
+        port = response['data']
         start_the_game(int(port))
     else:
         global join_status
         join_status = 'Joining fail :('
         logging.info('TODO - Error during connection to room ')
+        logging.error(f"Code {response['code']} with message {response['message']} ")
 
 
 def draw_update_function_join_status_button(widget, menu):
@@ -231,15 +235,21 @@ def check_name(value):
 
 
 def host_game():
-    mess = prepare_message(command='START_CHANNEL', auth='')
+    mess = prepare_standard_msg(command='START_CHANNEL', auth='')
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
     except:
         connect_to_main_server()
         MAIN_SERVER_SOCKET.sendall(mess)
 
-    headers, code = recv_msg_from_socket(MAIN_SERVER_SOCKET)
-    join_room(code)
+    recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+    response = decode_status_msg(recv_data)
+    if response['code'] == 200:
+        port = response['data']
+        join_room(port)
+    else:
+        logging.info('TODO - Error during hosting')
+        logging.error(f"Code {response['code']} with message {response['message']} ")
 
 
 if __name__ == '__main__':
