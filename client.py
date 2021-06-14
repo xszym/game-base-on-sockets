@@ -52,14 +52,9 @@ AVAILABLE_GAMES = [('', '')]
 
 # Sound source: http://ccmixter.org/files/Apoxode/59262
 # License: https://creativecommons.org/licenses/by/3.0/
-# pygame.mixer.music.load("media/Apoxode_-_Electric_1.ogg")
-# pygame.mixer.music.play(loops=-1)
-#
-# # collision_sound = pygame.mixer.Sound("media/Collision.ogg")
-# pygame.mixer.music.set_volume(0.0)
-#
-# pygame.mixer.music.stop()
-# pygame.mixer.quit()
+pygame.mixer.music.load("media/Apoxode_-_Electric_1.ogg")
+pygame.mixer.music.play(loops=-1)
+pygame.mixer.music.set_volume(0.1)
 
 
 def start_the_game(port):
