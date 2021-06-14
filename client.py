@@ -193,6 +193,8 @@ def join_room(code, _=None):
     response = decode_status_msg(recv_data)
 
     if response['code'] == 200:
+        global GAME_JOIN_CODE
+        GAME_JOIN_CODE = code
         port = response['data']
         start_the_game(int(port))
     else:
