@@ -1,18 +1,15 @@
-import pygame
-import math
-import random
-from random import randrange, gauss
 import logging
-import time
-logging.basicConfig(level=logging.INFO)
+from random import randrange, gauss
 
-
+import pygame
 from pygame.locals import (
     RLEACCEL
 )
 
 from src.config import *
-from src.utils import current_milliseconds
+
+logging.basicConfig(level=logging.INFO)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, nickname, x, y, angle, health=DEFAULT_PLAYER_HEALTH, connected_players_profiles=None):
@@ -27,22 +24,11 @@ class Player(pygame.sprite.Sprite):
             center=(x, y)
         )
 
-        if connected_players_profiles != None:
-            while True:
-                is_colliding = False
-                for s, other_player_profile in connected_players_profiles.items():
-                    if self.rect.colliderect(other_player_profile.player_game_object.rect):
-                        is_colliding = True
-                if is_colliding:
-                    self.rect = self.surf.get_rect(
-                        center=(randrange(400) + 10, randrange(300) + 10)
-                    )
-                else:
-                    break
+        self.spawn_on_empty_place(connected_players_profiles)
 
         self.speed = PLAYER_DEFAULT_SPEED
         self.angle = angle
-        self.surf = pygame.transform.rotate(self.surf, angle-90)
+        self.surf = pygame.transform.rotate(self.surf, angle - 90)
         self.nickname = nickname
         self.font = pygame.font.SysFont("Arial", 10)
         self.textSurf = self.font.render(self.nickname, 1, pygame.Color('white'))
@@ -54,8 +40,22 @@ class Player(pygame.sprite.Sprite):
 
         W = self.textSurf.get_width()
         H = self.textSurf.get_height()
-        self.surf.blit(self.textSurf, [self.rect.width/2 - W/2, self.rect.height/4 - H/2]) # 
-        self.surf.blit(self.textSurfRotated, [self.rect.width/2 - W/2, self.rect.height*3/4 - H/2])
+        self.surf.blit(self.textSurf, [self.rect.width / 2 - W / 2, self.rect.height / 4 - H / 2])  #
+        self.surf.blit(self.textSurfRotated, [self.rect.width / 2 - W / 2, self.rect.height * 3 / 4 - H / 2])
+
+    def spawn_on_empty_place(self, connected_players_profiles):
+        if connected_players_profiles is not None:
+            while True:
+                is_colliding = False
+                for s, other_player_profile in connected_players_profiles.items():
+                    if self.rect.colliderect(other_player_profile.player_game_object.rect):
+                        is_colliding = True
+                if is_colliding:
+                    self.rect = self.surf.get_rect(
+                        center=(randrange(400) + 10, randrange(300) + 10)
+                    )
+                else:
+                    break
 
     def draw_health_bar(self):
         if self.health < DEFAULT_PLAYER_HEALTH:
@@ -76,7 +76,7 @@ class Player(pygame.sprite.Sprite):
             self.surf = pygame.transform.rotate(self.surf, angle_delta)
             self.angle = _angle
 
-    def colide_dection_bullet(self, bullets):
+    def collide_detection_bullet(self, bullets):
         was_collide = False
         for bullet in bullets:
             if self.rect.colliderect(bullet):
@@ -86,7 +86,7 @@ class Player(pygame.sprite.Sprite):
                 was_collide = True
         return was_collide
 
-    def colide_dection_other_player(self, other_players):
+    def collide_detection_other_player(self, other_players):
         for other_player in other_players:
             if other_player.rect == self.rect:
                 continue
@@ -95,45 +95,16 @@ class Player(pygame.sprite.Sprite):
         return False
 
     def update(self, pressed_keys, bullets, other_player):
-        self.colide_dection_bullet(bullets)
-
+        self.collide_detection_bullet(bullets)
         if self.health < 1:
             return bullets
-
         self.draw_health_bar()
+        self.move_player(pressed_keys, other_player)
+        self.shoot(pressed_keys, bullets)
+        self.keep_player_on_map()
+        return bullets
 
-        if pressed_keys[K_UP]:
-            self.rotate_to_angle(180)
-            self.rect.move_ip(0, -self.speed)
-            if self.colide_dection_other_player(other_player):
-                self.rect.move_ip(0, self.speed)
-        elif pressed_keys[K_DOWN]:
-            self.rotate_to_angle(0)
-            self.rect.move_ip(0, self.speed)
-            if self.colide_dection_other_player(other_player):
-                self.rect.move_ip(0, -self.speed)
-        if pressed_keys[K_LEFT]:
-            self.rotate_to_angle(270)
-            self.rect.move_ip(-self.speed, 0)
-            if self.colide_dection_other_player(other_player):
-                self.rect.move_ip(self.speed, 0)
-        elif pressed_keys[K_RIGHT]:
-            self.rotate_to_angle(90)
-            self.rect.move_ip(self.speed, 0)
-            if self.colide_dection_other_player(other_player):
-                self.rect.move_ip(-self.speed, 0)
-
-        if pressed_keys[K_SPACE]:
-            if self.angle == 0:
-                new_Bullet = Bullet(self.rect.centerx+BULLET_FROM_PLAYER_OFFSET,self.rect.bottom-BULLET_FROM_PLAYER_OFFSET, self.angle)
-            elif self.angle == 90:
-                new_Bullet = Bullet(self.rect.right, self.rect.centery, self.angle)
-            elif self.angle == 180:
-                new_Bullet = Bullet(self.rect.centerx+BULLET_FROM_PLAYER_OFFSET, self.rect.top-BULLET_FROM_PLAYER_OFFSET, self.angle)
-            elif self.angle == 270:
-                new_Bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
-            bullets.add(new_Bullet)
-
+    def keep_player_on_map(self):
         if self.rect.left < 0:
             self.rect.left = 0
         elif self.rect.right > SCREEN_WIDTH:
@@ -142,7 +113,42 @@ class Player(pygame.sprite.Sprite):
             self.rect.top = 0
         elif self.rect.bottom >= SCREEN_HEIGHT:
             self.rect.bottom = SCREEN_HEIGHT
-        return bullets
+
+    def move_player(self, pressed_keys, other_player):
+        if pressed_keys[K_UP]:
+            self.rotate_to_angle(180)
+            self.rect.move_ip(0, -self.speed)
+            if self.collide_detection_other_player(other_player):
+                self.rect.move_ip(0, self.speed)
+        elif pressed_keys[K_DOWN]:
+            self.rotate_to_angle(0)
+            self.rect.move_ip(0, self.speed)
+            if self.collide_detection_other_player(other_player):
+                self.rect.move_ip(0, -self.speed)
+        if pressed_keys[K_LEFT]:
+            self.rotate_to_angle(270)
+            self.rect.move_ip(-self.speed, 0)
+            if self.collide_detection_other_player(other_player):
+                self.rect.move_ip(self.speed, 0)
+        elif pressed_keys[K_RIGHT]:
+            self.rotate_to_angle(90)
+            self.rect.move_ip(self.speed, 0)
+            if self.collide_detection_other_player(other_player):
+                self.rect.move_ip(-self.speed, 0)
+
+    def shoot(self, pressed_keys, bullets):
+        if pressed_keys[K_SPACE]:
+            if self.angle == 0:
+                new_bullet = Bullet(self.rect.centerx + BULLET_FROM_PLAYER_OFFSET,
+                                    self.rect.bottom - BULLET_FROM_PLAYER_OFFSET, self.angle)
+            elif self.angle == 90:
+                new_bullet = Bullet(self.rect.right, self.rect.centery, self.angle)
+            elif self.angle == 180:
+                new_bullet = Bullet(self.rect.centerx + BULLET_FROM_PLAYER_OFFSET,
+                                    self.rect.top - BULLET_FROM_PLAYER_OFFSET, self.angle)
+            elif self.angle == 270:
+                new_bullet = Bullet(self.rect.left, self.rect.centery, self.angle)
+            bullets.add(new_bullet)
 
 
 class Bullet(pygame.sprite.Sprite):
@@ -154,10 +160,14 @@ class Bullet(pygame.sprite.Sprite):
             center=(x, y)
         )
         self.speed = BULLET_DEFAULT_SPEED
-        self.surf = pygame.transform.rotate(self.surf, angle+90)
+        self.surf = pygame.transform.rotate(self.surf, angle + 90)
         self.angle = angle
 
     def update(self):
+        self.check_is_bullet_on_map()
+        self.move_bullet()
+
+    def check_is_bullet_on_map(self):
         if self.rect.left < 0:
             self.kill()
         elif self.rect.right > SCREEN_WIDTH:
@@ -167,8 +177,8 @@ class Bullet(pygame.sprite.Sprite):
         elif self.rect.bottom >= SCREEN_HEIGHT:
             self.kill()
 
+    def move_bullet(self):
         bullet_offset = gauss(0, BULLET_GAUSS_SIGMA)
-        # bullet_offset = randrange(-10, 10)
         if self.angle == 0:
             self.rect.move_ip(bullet_offset, self.speed)
         elif self.angle == 90:

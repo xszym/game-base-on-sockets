@@ -1,11 +1,17 @@
 # Tank game base on sockets
+2D tank game where you can:
+- Play with your friends
+- Host own game
+- Join to others servers
+- Become CHAMPION of this game
+
 
 ## Podstawowe założenia 
 - [x] Jako program zaliczeniowy rozumiemy parę programów serwer i klient.
 - [x] serwer ma możliwość obsługi wielu klientów jednocześnie.
 - [x] W każdym z programów należy zaimplementować własny protokół
     - [ ] dokładnie określić typ i format dozwolonych wiadomośc
-- [ ] Komendy protokołu wraz z ich parametrami, powinny być dokładnie zdefiniowanie i opisane pliku imitującym dokumentację techniczną
+- [x] Komendy protokołu wraz z ich parametrami, powinny być dokładnie zdefiniowanie i opisane pliku imitującym dokumentację techniczną
     - [ ] http://libgadu.net/protocol/#ch1.1
 - [ ] Należy zadbać o prawidłową obsługę błędów każdej funkcji w programie
 - [x] W projektach nie korzystamy z gotowych bibliotek.
@@ -14,17 +20,17 @@
 
 ### Uzyskanie większej liczby punktów niż 50 wymaga:
 - [x] 1. zaimplementowania logiki, która wykorzystuje więcej niż 3 rodzaje przesyłanych wiadomości oraz  
-- [ ] 2. wykorzystania co najmniej 1 mechanizmu z poniższych:
+- [x] 2. wykorzystania co najmniej 1 mechanizmu z poniższych:
     ~~a. synchronizacja wątków,~~
-    - [ ] b. obsługa większej liczby graczy niż dwóch jednocześnie,                                      
+    - [x] b. obsługa większej liczby graczy niż dwóch jednocześnie,                                      
     ~~c. obsługa wielu procesów równolegle,~~
 
 ### Uzyskanie większej liczby punktów niż 65 wymaga:
-- [ ] 1. spełnienia warunków z punktu powyższego oraz
+- [x] 1. spełnienia warunków z punktu powyższego oraz
 - [ ] 2. wykorzystania co najmniej 2 z poniższych mechanizmów:
         ~~a. inna architektura niż klient-serwer, ~~
         ~~b. asynchroniczność (p2p),~~
-    - [ ] c. serwer zdarzeniowy, 
+    - [x] c. serwer zdarzeniowy, 
     - [ ] d. połączenia szyfrowane.  
 
 
@@ -33,12 +39,8 @@
 2. Klient może stworzyć lub dołączyć do pokój (2 przyciski)
 Tworzenie: (1 napis i 1 przycisk)
 - [x] Po kliknięciu stwórz pokój dostaje kod dołacznia do pokóju od serwara
-- [ ] otrzymuje ile osób dołączyło 
-- [ ] Ma przycisk START GAME
 Dołączenie. (same napisy)
-- [ ] dołącza do kanały 
-- [ ] otrzymuje ile osób jest w pokóju
-- [ ] ma napis czekanie na hosta
+- [x] Dołączanie do kanału
 
 
 ## Komunikacja
@@ -65,10 +67,9 @@ Rodzaje wiadmości:
 
 
 ## Można
-- [ ] Są roomy
-- [ ] czekamy na osoby
-- [ ] mogą być invide (np. po kodzie)
-- [ ] wysyłanie i odbieranie na odzielnym wątku
+- [x] Są roomy
+- [x] mogą być invide (np. po kodzie)
+- [x] wysyłanie i odbieranie na odzielnym wątku
 - [ ] wymiana kluczy na początku (rejstracja)
 
 
@@ -78,47 +79,19 @@ Rodzaje wiadmości:
 
 ## Run
 - ```python server.py```
-- ```python client.py -L``` for local server
 - ```python client.py``` for public server
+- ```python client.py -L``` for own local server
 
 
-## Links 
-https://gamedev.stackexchange.com/questions/20425/game-logic-on-the-server-good-or-bad
-
-
-## Encrypt 
-https://stackoverflow.com/questions/27287306/sending-encrypted-strings-using-socket-in-python
-
-https://riptutorial.com/python/topic/8710/sockets-and-message-encryption-decryption-between-client-and-server
-
-https://hub.packtpub.com/protect-tcp-tunnel-implementing-aes-encryption-with-python/
-
-https://stackoverflow.com/questions/12524994/encrypt-decrypt-using-pycrypto-aes-256
-
+## SLL 
+https://docs.python.org/3/library/ssl.html
 
 # TODO
-- [x] Kolizja pomiędzy czołgami 
-- [x] Kolizja z pociskiem
-- [x] Życie
-- [x] END GAME
-- [x] Odkomendować wiele roomów 
-- [x] Join do serwera po Kodzie
-- [x] Serwer zdarzeniowy
-- [x] Serduszka nad graczami 
 - [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
 - [ ] Nickname wysyłać od klienta i przypisać go do playera
-- [ ] Pokazywanie roomów 
 - [ ] Testy i obsługa błędów
 
 
 # Bugs
-- [x] Jak klient się rozłącza to nie usuwa go z listy połączonych graczy (quit do menu -> wysla do serwera ze wychodzi z gry, serwer usuwa gracza z listy)
-- [x] Możliwość sepownowania dwóch czołgów w tym samym miejscu 
-- [x] Małe prawdopodobieństwo spawnu na innym graczu 
-- [ ] Dead jest przekręcone przy śmieci 
-- [x] Po wyjściu wszystkich z gry - niech player cały czas żyje, a gra cały czas trwa
-- [x] Po rozłączeniu gracz zostaje żywy mimo że wyszedł 
-- [x] Włączenie klienta gdy nie działa serwer albo nie ma podłączenie, nie pozwala się połączyć nawet jeśli serwer później się włączy
 - [ ] NIe obsłgujemy błędów gdy serwer jest całgowicie wyłączony
-- [x] Po rozłączeniu jedynego gracza serwer nadal stoi 
 - [ ] Na winows przyciski od poruszania sie są zupełnie inne 
