@@ -1,20 +1,17 @@
-import time
-import pickle
-import json
 import struct
+import time
 from time import sleep, time
 
 from src.config import *
 
-
-ordinal = lambda n: "%d%s" % (n,"tsnrhtdd"[(n//10%10!=1)*(n%10<4)*n%10::4])
+ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10::4])
 
 
 def convert_string_to_bytes(string):
     bytes = b''
     for i in string:
         bytes += struct.pack("B", ord(i))
-    return bytes   
+    return bytes
 
 
 def current_milliseconds():
@@ -42,17 +39,17 @@ def prepare_message(command=None, status=None, auth=None, data=''):
 
     if status:
         if len(header_msg) > 0: header_msg += soft_end
-        header_msg += status_header_code + ":" + status    
-    
+        header_msg += status_header_code + ":" + status
+
     if auth:
         if len(header_msg) > 0: header_msg += soft_end
         header_msg += auth_header_code + ":" + auth
-    
+
     if len(header_msg) > 0: header_msg += soft_end
-    header_msg += lenght_header_code + ":" + str(len(str(data)))
+    header_msg += length_header_code + ":" + str(len(str(data)))
 
     mess = header_msg + soft_end + data_header_code + ":" + str(data) + hard_end
-    return mess.encode('utf-8') 
+    return mess.encode('utf-8')
 
 
 def recv_msg_from_socket(sock):
@@ -88,7 +85,7 @@ def send_to_socket_from_pointer(_socket, value):
                     _socket.send(newest_data)
                 last_send_value = newest_data
                 last_update_millis = now_millis
-            sleep(1/15)
+            sleep(1 / 15)
         except:
-            print("Breaked connection on port")
+            print("Broke connection on port")
             break
