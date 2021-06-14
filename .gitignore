@@ -4,3 +4,4 @@ __pycache__/game_classes.cpython-37.pyc
 __pycache__/game_config.cpython-37.pyc
 ___pycache__/
 *.py[cod]
+.idea
