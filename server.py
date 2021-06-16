@@ -15,7 +15,7 @@ from src.config import *
 from src.game_classes import Player
 from src.serializers import serialize_game_objects
 from src.utils import decode_standard_msg, recv_from_socket_to_pointer, send_to_socket_from_pointer, \
-    ordinal, prepare_status_msg, prepare_game_msg
+    ordinal, prepare_status_msg, prepare_game_msg, decode_game_msg
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 AVAILABLE_GAMES = {}
@@ -41,7 +41,7 @@ def open_new_connection(port=0):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
         sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
-    logging.info("Starting new connection at port", get_port_of_socket(sock))
+    logging.info("Starting new connection at port", str(get_port_of_socket(sock)))
     return sock
 
 
@@ -59,11 +59,9 @@ class PlayerProfil():
                                                args=(self.socket, self.send_to_newest_value,))
         self.recv_from_thread.start()
         self.send_to_thread.start()
-
-        self.nickname = nickname
         self.secret_key = '1234'
 
-        self.player_game_object = Player(self.nickname, randrange(400) + 10, randrange(300) + 10, 0,
+        self.player_game_object = Player(randrange(400) + 10, randrange(300) + 10, 0,
                                          connected_players_profiles=connected_players_profiles)
 
     def __del__(self):
@@ -138,8 +136,13 @@ def game_loop(tank_game):
             players_objects.add(player_profile.player_game_object)
 
         for key, player_profile in tank_game.connected_players.items():
-            pressed_keys = player_profile.recv_from_last_value[0]
-            if pressed_keys != '':
+            recv_from_player = player_profile.recv_from_last_value[0]
+            if recv_from_player != '':
+                print(recv_from_player)
+                nickname = recv_from_player.split(',', 1)[0]
+                pressed_keys = recv_from_player.split(',', 1)[1]
+                pressed_keys = decode_game_msg(pressed_keys)
+                player_profile.player_game_object.nickname = nickname
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
             else:
                 pressed_keys = pygame.key.get_pressed()

@@ -46,11 +46,11 @@ def deserialize_game_objects(msg):
                             recived_object['angle'])
             entities.append(entity)
         elif recived_object['type'] == 'player':
-            entity = Player(recived_object['nickname'],
-                            recived_object['centerx'],
+            entity = Player(recived_object['centerx'],
                             recived_object['centery'],
                             recived_object['angle'],
-                            recived_object['health']
+                            recived_object['health'],
+                            nickname = recived_object['nickname']
                             )
             entities.append(entity)
     return entities

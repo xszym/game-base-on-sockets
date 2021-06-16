@@ -13,7 +13,7 @@ from pygame.locals import (
 from src.config import *
 from src.serializers import deserialize_game_objects, map_pressed_keys_to_list
 from src.utils import prepare_standard_msg, recv_msg_from_socket, recv_from_socket_to_pointer, \
-    send_to_socket_from_pointer, decode_status_msg, prepare_game_msg
+    send_to_socket_from_pointer, decode_status_msg, prepare_game_msg, decode_game_msg
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -84,12 +84,13 @@ def start_the_game(port):
         else:
             pressed_keys = pygame.key.get_pressed()
             pressed_keys = map_pressed_keys_to_list(pressed_keys)
-            dumped_pressed_keys = json.dumps(pressed_keys)
-            msg = prepare_game_msg(dumped_pressed_keys)
+            response = f"{USER_NAME},{json.dumps(pressed_keys)}"
+            msg = prepare_game_msg(response)
             send_to_newest_value[0] = msg
 
             if recv_from_last_value[0] != '':
                 game_data = recv_from_last_value[0]
+                game_data = decode_game_msg(game_data)
                 if 'GAME_OVER' in game_data:
                     is_game_over = True
                     player_place = game_data[1]
@@ -113,7 +114,7 @@ def create_menu_main():
     join_menu = create_menu_join()
     about_menu = create_menu_about()
     main_menu = pygame_menu.Menu('PAS 2021 - TANKS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=MENU_THEME)
-    main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=10, onchange=check_name)
+    main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=7, onchange=check_name)
     main_menu.add.button('Host Game', host_game)
     main_menu.add.button('Join game', join_menu)  # maxchar=4, onreturn=)
     main_menu.add.button('About', about_menu)

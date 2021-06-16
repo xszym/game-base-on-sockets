@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Player(pygame.sprite.Sprite):
-    def __init__(self, nickname, x, y, angle, health=DEFAULT_PLAYER_HEALTH, connected_players_profiles=None):
+    def __init__(self, x, y, angle, health=DEFAULT_PLAYER_HEALTH, connected_players_profiles=None, nickname=' '):
         super(Player, self).__init__()
         self.health = health
         if self.health > 0:

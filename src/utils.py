@@ -56,8 +56,7 @@ def prepare_game_msg(game_data):
 
 
 def decode_game_msg(recv_data):
-    game_data = decode_msg(recv_data)
-    game_data = json.loads(game_data)
+    game_data = json.loads(recv_data)
     return game_data
 
 
@@ -85,8 +84,8 @@ def recv_from_socket_to_pointer(_socket, value):
     while True:
         try:
             data_rec = recv_msg_from_socket(_socket)
-            game_data = decode_game_msg(data_rec)
-            value[0] = game_data
+            data_rec = decode_msg(data_rec)
+            value[0] = data_rec
         except:
             break
 
