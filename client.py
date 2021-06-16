@@ -20,7 +20,9 @@ logging.basicConfig(level=logging.DEBUG)
 
 MAIN_SERVER_SOCKET = None
 IS_LOCAL = False
-if '-L' in sys.argv[1:]:
+MY_UUID = None
+
+if '-L' in sys.argv[1:] or '--local' in sys.argv[1:] :
     IS_LOCAL = True
 
 if IS_LOCAL:
@@ -29,27 +31,43 @@ else:
     SERVER_IP = os.environ.get('SERVER_IP', default=PUBLIC_SERVER_IP)
 
 
-def connect_to_main_server():
+def create_ssl_context():
     ssl_context = ssl.create_default_context(
         ssl.Purpose.SERVER_AUTH,
-        cafile='keys/client.crt'
+        cafile='keys/server.crt'
     )
-    context.load_cert_chain('klient.crt','klient.key')
+    ssl_context.load_cert_chain('keys/client.crt','keys/client.key') 
     ssl_context.check_hostname = False
-    # ssl_context.load_cert_chain(certfile='keys/client.crt')
+    return ssl_context
+ssl_context = create_ssl_context()
+
+
+def connect_to_main_server():
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
 
         ssock = ssl_context.wrap_socket(sock, server_hostname=SERVER_IP)
-        print(ssock.version())
+        # print(ssock.version())
         global MAIN_SERVER_SOCKET
         MAIN_SERVER_SOCKET = ssock
     except:
         logging.error("Error while connecting to main server")
-
+    
+def get_own_uuid():
+    global MY_UUID
+    global MAIN_SERVER_SOCKET
+    if not MY_UUID: 
+        mess = prepare_standard_msg(command='REGISTER')
+        MAIN_SERVER_SOCKET.sendall(mess)
+        recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
+        response = decode_status_msg(recv_data)
+        MY_UUID = response.get('data', None)
+        print(response)
 
 connect_to_main_server()
+get_own_uuid()
+
 
 pygame.mixer.init()
 pygame.init()
@@ -74,6 +92,7 @@ def start_the_game(port):
     player_place = 'No place'
     game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     game_socket.connect((SERVER_IP, port))
+    game_socket = ssl_context.wrap_socket(game_socket, server_hostname=SERVER_IP)
 
     recv_from_last_value = ['']
     send_to_newest_value = ['']

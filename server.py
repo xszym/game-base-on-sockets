@@ -20,6 +20,8 @@ from src.utils import decode_standard_msg, recv_from_socket_to_pointer, send_to_
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 AVAILABLE_GAMES = {}
+REGISTERED_CLIENTS = {}
+MAX_NO_GAMES = MAX_PORT - MIN_PORT
 clients = []
 
 
@@ -28,6 +30,9 @@ def get_port_of_socket(sock):
 
 
 def open_new_connection(port=0):
+    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile='keys/client.crt')
+    ssl_context.check_hostname = False
+    ssl_context.load_cert_chain('keys/server.crt', 'keys/server.key')
     if port == 0:
         while True:
             try:
@@ -42,8 +47,9 @@ def open_new_connection(port=0):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.bind(('0.0.0.0', port))
         sock.listen(SERVER_NO_OF_QUEUED_CONNECTIONS)
-    logging.info("Starting new connection at port", str(get_port_of_socket(sock)))
-    return sock
+
+    ssock = ssl_context.wrap_socket(sock, server_side=True)
+    return ssock
 
 
 class PlayerProfil():
@@ -72,7 +78,6 @@ class PlayerProfil():
 class TankGame():
     def __init__(self):
         self.join_code = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(4))
-
         self.socket = open_new_connection()
         self.connected_players = {}
         self.port = get_port_of_socket(self.socket)
@@ -171,7 +176,7 @@ def game_loop(tank_game):
                     msg = prepare_game_msg(json.dumps(['GAME_OVER', ordinal(no_alive_players + 1)]))
                     player_profile.send_to_newest_value[0] = msg
         clock.tick(30)
-    # sleep(1)
+
     global AVAILABLE_GAMES
     del AVAILABLE_GAMES[tank_game.join_code]
     del tank_game
@@ -226,14 +231,16 @@ class MainGameServerProtocol(asyncio.Protocol):
                     login = get_random_uuid_for_player()
                     response_mess = prepare_status_msg(200, message='Success', data=login)
                     self.transport.write(response_mess)
-                    # TODO - Zpisywanie do plaintext zarejstrowanych USSID
-                    # mess = prepare_message(command='REGISTER',status='ERR')
                 elif command == 'START_CHANNEL':
-                    try:
-                        join_code = start_the_game()
-                        response_mess = prepare_status_msg(200, message='Success', data=join_code)
-                    except:
-                        response_mess = prepare_status_msg(400, message='Fail')
+                    no_of_games = len(AVAILABLE_GAMES.keys())
+                    if no_of_games < MAX_NO_GAMES:
+                        try:
+                            join_code = start_the_game()
+                            response_mess = prepare_status_msg(200, message='Success', data=join_code)
+                        except:
+                            response_mess = prepare_status_msg(400, message='Fail')
+                    else:
+                        response_mess = prepare_status_msg(400, message='Reached max number of games')
                     self.transport.write(response_mess)
                 elif command == 'JOIN_CHANNEL':
                     join_code = headers.get('Data')
@@ -262,10 +269,9 @@ class MainGameServerProtocol(asyncio.Protocol):
 thread_pool = ThreadPoolExecutor()
 loop = asyncio.get_event_loop()
 
-ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-#ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH,cafile='keys/client.crt')
+ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile='keys/client.crt')
 ssl_context.check_hostname = False
-ssl_context.load_cert_chain('keys/client.crt', 'keys/client.key')
+ssl_context.load_cert_chain('keys/server.crt', 'keys/server.key')
 
 coroutine = loop.create_server(MainGameServerProtocol, host='0.0.0.0', port=MAIN_SERVER_SOCKET_PORT, ssl=ssl_context)
 server = loop.run_until_complete(coroutine)
