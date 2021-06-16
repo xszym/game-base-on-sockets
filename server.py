@@ -16,11 +16,11 @@ from src.config import *
 from src.game_classes import Player
 from src.serializers import serialize_game_objects
 from src.utils import decode_standard_msg, recv_from_socket_to_pointer, send_to_socket_from_pointer, \
-    ordinal, prepare_status_msg, prepare_game_msg, decode_game_msg
+    ordinal, prepare_status_msg, prepare_game_msg, decode_game_msg, recv_msg_from_socket, decode_msg
 
 os.environ["SDL_VIDEODRIVER"] = "dummy"
 AVAILABLE_GAMES = {}
-REGISTERED_CLIENTS = {}
+REGISTERED_CLIENTS = []
 MAX_NO_GAMES = MAX_PORT - MIN_PORT
 clients = []
 
@@ -53,7 +53,7 @@ def open_new_connection(port=0):
 
 
 class PlayerProfil():
-    def __init__(self, client_socket, connected_players_profiles, nickname='nickname'):
+    def __init__(self, client_socket, connected_players_profiles, uuid=0, nickname='nickname'):
         self.socket = client_socket
         self.socket_port = get_port_of_socket(self.socket)
 
@@ -66,7 +66,7 @@ class PlayerProfil():
                                                args=(self.socket, self.send_to_newest_value,))
         self.recv_from_thread.start()
         self.send_to_thread.start()
-        self.secret_key = '1234'
+        self.uuid = uuid
 
         self.player_game_object = Player(randrange(400) + 10, randrange(300) + 10, 0,
                                          connected_players_profiles=connected_players_profiles)
@@ -76,13 +76,14 @@ class PlayerProfil():
 
 
 class TankGame():
-    def __init__(self):
+    def __init__(self, host_uuid):
         self.join_code = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(4))
         self.socket = open_new_connection()
         self.connected_players = {}
         self.port = get_port_of_socket(self.socket)
         self.is_game_started = False
         self.was_two_players = False
+        self.host_uuid = host_uuid
 
         global AVAILABLE_GAMES
         AVAILABLE_GAMES[self.join_code] = self
@@ -99,8 +100,19 @@ class TankGame():
     def accept_new_client(self):
         client, addr = self.socket.accept()
         logging.info("Connected: " + addr[0] + " to game " + self.join_code)
+        while True:
+            recv_from_player = decode_msg(recv_msg_from_socket(client))
+            if recv_from_player != '':
+                nickname = recv_from_player.split(',', 1)[0]
+                auth = recv_from_player.split(',', 2)[1]
+                pressed_keys = recv_from_player.split(',', 2)[2]
+                break
+
         new_player_profile = PlayerProfil(client, self.connected_players)
-        self.connected_players[client] = new_player_profile  # TODO - change key from client to auth
+        if auth in self.connected_players:
+            temp = self.connected_players[auth].player_game_object
+            new_player_profile.player_game_object = temp
+        self.connected_players[auth] = new_player_profile  
         return new_player_profile
 
     def accept_new_players(self):
@@ -110,9 +122,6 @@ class TankGame():
 
     def wait_for_players(self):
         new_player_profile = self.accept_new_client()
-        if len(self.connected_players) == 1:
-            self.host_socket = new_player_profile
-
         accept_new_players_thread = threading.Thread(target=self.accept_new_players)
         accept_new_players_thread.start()
         self.accept_new_players_thread = accept_new_players_thread
@@ -145,7 +154,10 @@ def game_loop(tank_game):
             recv_from_player = player_profile.recv_from_last_value[0]
             if recv_from_player != '':
                 nickname = recv_from_player.split(',', 1)[0]
-                pressed_keys = recv_from_player.split(',', 1)[1]
+                auth = recv_from_player.split(',', 2)[1]
+                # if auth is not REGISTERED_CLIENTS:
+                #     continue
+                pressed_keys = recv_from_player.split(',', 2)[2]
                 pressed_keys = decode_game_msg(pressed_keys)
                 player_profile.player_game_object.nickname = nickname
                 bullets = player_profile.player_game_object.update(pressed_keys, bullets, players_objects)
@@ -182,8 +194,8 @@ def game_loop(tank_game):
     del tank_game
 
 
-def start_the_game():
-    tank_game = TankGame()
+def start_the_game(auth):
+    tank_game = TankGame(auth)
     game_threat = threading.Thread(target=game_loop, args=(tank_game,))
     game_threat.start()
     return tank_game.join_code
@@ -222,20 +234,27 @@ class MainGameServerProtocol(asyncio.Protocol):
         for msg in msgs:
             try:
                 global AVAILABLE_GAMES
+                global REGISTERED_CLIENTS
                 headers = decode_standard_msg(msg)
                 command = headers.get(command_header_code)
-
-                # TODO - Check if auth and auth correct ;) 
-
+                auth = headers.get(auth_header_code, '')
+                print(headers)
                 if command == 'REGISTER':
-                    login = get_random_uuid_for_player()
-                    response_mess = prepare_status_msg(200, message='Success', data=login)
+                    new_uuid = get_random_uuid_for_player()
+                    while new_uuid in REGISTERED_CLIENTS:
+                        new_uuid = get_random_uuid_for_player()
+                        print(new_uuid)
+                    REGISTERED_CLIENTS.append(new_uuid)
+                    response_mess = prepare_status_msg(200, message='Success', data=new_uuid)
                     self.transport.write(response_mess)
+                elif auth not in REGISTERED_CLIENTS:
+                    mess = prepare_status_msg(400, message='Please register')
+                    self.transport.write(mess)
                 elif command == 'START_CHANNEL':
                     no_of_games = len(AVAILABLE_GAMES.keys())
                     if no_of_games < MAX_NO_GAMES:
                         try:
-                            join_code = start_the_game()
+                            join_code = start_the_game(auth)
                             response_mess = prepare_status_msg(200, message='Success', data=join_code)
                         except:
                             response_mess = prepare_status_msg(400, message='Fail')
@@ -243,7 +262,7 @@ class MainGameServerProtocol(asyncio.Protocol):
                         response_mess = prepare_status_msg(400, message='Reached max number of games')
                     self.transport.write(response_mess)
                 elif command == 'JOIN_CHANNEL':
-                    join_code = headers.get('Data')
+                    join_code = headers.get(data_header_code)
                     if join_code in AVAILABLE_GAMES:
                         mess = prepare_status_msg(200, message='Success',
                                                   data=str(AVAILABLE_GAMES[join_code].port))

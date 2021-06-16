@@ -41,14 +41,13 @@ def create_ssl_context():
     return ssl_context
 ssl_context = create_ssl_context()
 
-
 def connect_to_main_server():
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
 
         ssock = ssl_context.wrap_socket(sock, server_hostname=SERVER_IP)
-        # print(ssock.version())
+
         global MAIN_SERVER_SOCKET
         MAIN_SERVER_SOCKET = ssock
     except:
@@ -59,11 +58,12 @@ def get_own_uuid():
     global MAIN_SERVER_SOCKET
     if not MY_UUID: 
         mess = prepare_standard_msg(command='REGISTER')
+        print("START REGISTER")
         MAIN_SERVER_SOCKET.sendall(mess)
         recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
         response = decode_status_msg(recv_data)
-        MY_UUID = response.get('data', None)
         print(response)
+        MY_UUID = response.get(data_header_code)
 
 connect_to_main_server()
 get_own_uuid()
@@ -86,7 +86,6 @@ pygame.mixer.music.set_volume(0.1)
 
 
 def start_the_game(port):
-    print(port)
     running = True
     is_game_over = False
     player_place = 'No place'
@@ -115,7 +114,8 @@ def start_the_game(port):
         else:
             pressed_keys = pygame.key.get_pressed()
             pressed_keys = map_pressed_keys_to_list(pressed_keys)
-            response = f"{USER_NAME},{json.dumps(pressed_keys)}"
+            global MY_UUID
+            response = f"{USER_NAME},{MY_UUID},{json.dumps(pressed_keys)}"
             msg = prepare_game_msg(response)
             send_to_newest_value[0] = msg
 
@@ -175,7 +175,8 @@ def create_menu_join():
 
 
 def list_games(_=None, __=None):
-    mess = prepare_standard_msg(command='LIST_GAMES')
+    global MY_UUID
+    mess = prepare_standard_msg(command='LIST_GAMES', auth=MY_UUID)
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
     except:
@@ -212,9 +213,10 @@ def update_join_status(code):
 
 
 def join_room(code, _=None):
+    global MY_UUID
     if isinstance(code, tuple):
         code = code[0][0]
-    mess = prepare_standard_msg(command='JOIN_CHANNEL', data=code)
+    mess = prepare_standard_msg(command='JOIN_CHANNEL', auth=MY_UUID, data=code)
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
     except:
@@ -232,7 +234,6 @@ def join_room(code, _=None):
     else:
         global join_status
         join_status = 'Joining fail :('
-        logging.info('TODO - Error during connection to room ')
         logging.error(f"Code {response['code']} with message {response['message']} ")
 
 
@@ -269,7 +270,8 @@ def check_name(value):
 
 
 def host_game():
-    mess = prepare_standard_msg(command='START_CHANNEL', auth='')
+    global MY_UUID
+    mess = prepare_standard_msg(command='START_CHANNEL', auth=MY_UUID)
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
     except:
