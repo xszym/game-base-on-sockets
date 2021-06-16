@@ -263,6 +263,7 @@ thread_pool = ThreadPoolExecutor()
 loop = asyncio.get_event_loop()
 
 ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+#ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH,cafile='keys/client.crt')
 ssl_context.check_hostname = False
 ssl_context.load_cert_chain('keys/client.crt', 'keys/client.key')
 
