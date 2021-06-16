@@ -84,7 +84,7 @@ def start_the_game(port):
         else:
             pressed_keys = pygame.key.get_pressed()
             pressed_keys = map_pressed_keys_to_list(pressed_keys)
-            response = f"ProPlayerXD,{json.dumps(pressed_keys)}"
+            response = f"{USER_NAME},{json.dumps(pressed_keys)}"
             msg = prepare_game_msg(response)
             send_to_newest_value[0] = msg
 
@@ -114,7 +114,7 @@ def create_menu_main():
     join_menu = create_menu_join()
     about_menu = create_menu_about()
     main_menu = pygame_menu.Menu('PAS 2021 - TANKS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=MENU_THEME)
-    main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=10, onchange=check_name)
+    main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=7, onchange=check_name)
     main_menu.add.button('Host Game', host_game)
     main_menu.add.button('Join game', join_menu)  # maxchar=4, onreturn=)
     main_menu.add.button('About', about_menu)
