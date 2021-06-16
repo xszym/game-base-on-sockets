@@ -3,6 +3,7 @@ import json
 import logging
 import random
 import socket
+import ssl
 import string
 import threading
 import uuid
@@ -138,7 +139,6 @@ def game_loop(tank_game):
         for key, player_profile in tank_game.connected_players.items():
             recv_from_player = player_profile.recv_from_last_value[0]
             if recv_from_player != '':
-                print(recv_from_player)
                 nickname = recv_from_player.split(',', 1)[0]
                 pressed_keys = recv_from_player.split(',', 1)[1]
                 pressed_keys = decode_game_msg(pressed_keys)
@@ -246,9 +246,6 @@ class MainGameServerProtocol(asyncio.Protocol):
                 elif command == 'LIST_GAMES':
                     mess = prepare_status_msg(200, message='Success', data=str(list(AVAILABLE_GAMES.keys())))
                     self.transport.write(mess)
-                elif command == 'QUIT GAME':
-                    mess = prepare_status_msg(200, message='Success')
-                    self.transport.write(mess)
                 else:
                     mess = prepare_status_msg(400, message='Invalid command')
                     self.transport.write(mess)
@@ -265,7 +262,11 @@ class MainGameServerProtocol(asyncio.Protocol):
 thread_pool = ThreadPoolExecutor()
 loop = asyncio.get_event_loop()
 
-coroutine = loop.create_server(MainGameServerProtocol, host='0.0.0.0', port=MAIN_SERVER_SOCKET_PORT)
+ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+ssl_context.check_hostname = False
+ssl_context.load_cert_chain('keys/client.crt', 'keys/client.key')
+
+coroutine = loop.create_server(MainGameServerProtocol, host='0.0.0.0', port=MAIN_SERVER_SOCKET_PORT, ssl=ssl_context)
 server = loop.run_until_complete(coroutine)
 
 for s in server.sockets:

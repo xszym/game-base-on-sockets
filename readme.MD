@@ -88,10 +88,8 @@ https://docs.python.org/3/library/ssl.html
 
 # TODO
 - [ ] SZYFORWANIE = Enkrypcja i dekrypcja 
-- [ ] Nickname wysyłać od klienta i przypisać go do playera
 - [ ] Testy i obsługa błędów
 
 
 # Bugs
 - [ ] NIe obsłgujemy błędów gdy serwer jest całgowicie wyłączony
-- [ ] Na winows przyciski od poruszania sie są zupełnie inne 

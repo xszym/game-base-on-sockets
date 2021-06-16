@@ -1,6 +1,7 @@
 import json
 import logging
 import socket
+import ssl
 import sys
 import threading
 
@@ -29,10 +30,21 @@ else:
 
 
 def connect_to_main_server():
-    global MAIN_SERVER_SOCKET
+    ssl_context = ssl.create_default_context(
+        ssl.Purpose.SERVER_AUTH,
+        cafile='keys/client.crt'
+    )
+    context.load_cert_chain('klient.crt','klient.key')
+    ssl_context.check_hostname = False
+    # ssl_context.load_cert_chain(certfile='keys/client.crt')
     try:
-        MAIN_SERVER_SOCKET = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        MAIN_SERVER_SOCKET.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
+
+        ssock = ssl_context.wrap_socket(sock, server_hostname=SERVER_IP)
+        print(ssock.version())
+        global MAIN_SERVER_SOCKET
+        MAIN_SERVER_SOCKET = ssock
     except:
         logging.error("Error while connecting to main server")
 
