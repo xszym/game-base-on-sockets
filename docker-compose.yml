@@ -8,5 +8,5 @@ services:
       - .env
     ports:
       - "${PORT}:${PORT}"
-      - "40400-40420:40400-40420"
+      - "${GAME_PORTS_MIN}-${GAME_PORTS_MAX}:${GAME_PORTS_MIN}-${GAME_PORTS_MAX}"
     command: ["python3", "-u", "server.py"]
