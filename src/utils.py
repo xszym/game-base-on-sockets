@@ -61,7 +61,7 @@ def decode_game_msg(recv_data):
 
 
 def prepare_status_msg(code, message='', data=''):
-    mess = json.dumps({"code": code, "message": message, "data": data}) + hard_end
+    mess = json.dumps({"code": code, "message": message, data_header_code: data}) + hard_end
     return mess.encode('utf-8')
 
 
@@ -75,9 +75,6 @@ def recv_msg_from_socket(sock):
     while hard_end.encode() not in data_rec:
         data_rec = data_rec + sock.recv(1)
     return data_rec
-    # headers = decode_msg_header(data_rec)
-    # data = headers[data_header_code]
-    # return headers, data
 
 
 def recv_from_socket_to_pointer(_socket, value):
