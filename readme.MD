@@ -11,7 +11,7 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 
 
 ## Run own server
-- ```python3 server.py``` 
+- ```python3 server.py``` or ```docker-compose up --build```
 - ```python3 client.py -L``` for own local server
 
 
