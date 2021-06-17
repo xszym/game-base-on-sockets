@@ -237,12 +237,10 @@ class MainGameServerProtocol(asyncio.Protocol):
                 headers = decode_standard_msg(msg)
                 command = headers.get(command_header_code)
                 auth = headers.get(auth_header_code, '')
-                print(headers)
                 if command == 'REGISTER':
                     new_uuid = get_random_uuid_for_player()
                     while new_uuid in REGISTERED_CLIENTS:
                         new_uuid = get_random_uuid_for_player()
-                        print(new_uuid)
                     REGISTERED_CLIENTS.append(new_uuid)
                     response_mess = prepare_status_msg(200, message='Success', data=new_uuid)
                     self.transport.write(response_mess)

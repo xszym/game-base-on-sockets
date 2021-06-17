@@ -58,11 +58,11 @@ def get_own_uuid():
     global MAIN_SERVER_SOCKET
     if not MY_UUID: 
         mess = prepare_standard_msg(command='REGISTER')
-        print("START REGISTER")
+        logging.info("START REGISTER")
         MAIN_SERVER_SOCKET.sendall(mess)
         recv_data = recv_msg_from_socket(MAIN_SERVER_SOCKET)
         response = decode_status_msg(recv_data)
-        print(response)
+        logging.info(response)
         MY_UUID = response.get(data_header_code)
 
 connect_to_main_server()
