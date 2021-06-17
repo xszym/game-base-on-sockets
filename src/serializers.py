@@ -1,16 +1,14 @@
 import json
 
 from pygame.locals import (
-    RLEACCEL,
     K_UP,
     K_DOWN,
     K_LEFT,
     K_RIGHT,
     K_ESCAPE,
     K_SPACE,
-    KEYDOWN,
-    QUIT,
 )
+
 from src.game_classes import Player, Bullet
 
 
@@ -50,7 +48,7 @@ def deserialize_game_objects(msg):
                             recived_object['centery'],
                             recived_object['angle'],
                             recived_object['health'],
-                            nickname = recived_object['nickname']
+                            nickname=recived_object['nickname']
                             )
             entities.append(entity)
     return entities
