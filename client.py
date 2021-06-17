@@ -148,7 +148,7 @@ def create_menu_main():
     main_menu = pygame_menu.Menu('PAS 2021 - TANKS 2D', WINDOW_SIZE[1], WINDOW_SIZE[0], theme=MENU_THEME)
     main_menu.add.text_input('Name: ', default=USER_NAME, maxchar=7, onchange=check_name)
     main_menu.add.button('Host Game', host_game)
-    main_menu.add.button('Join game', join_menu)  # maxchar=4, onreturn=)
+    main_menu.add.button('Join game', join_menu)
     main_menu.add.button('About', about_menu)
     main_menu.add.button('Quit', pygame_menu.events.EXIT)
     return main_menu
@@ -267,7 +267,6 @@ def create_menu_about():
 def check_name(value):
     global USER_NAME
     USER_NAME = value
-    # TODO - Update pliku / serializacja
 
 
 def host_game():

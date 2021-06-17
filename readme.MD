@@ -15,7 +15,11 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 - ```python3 client.py -L``` for own local server
 
 
-## Podstawowe założenia 
+# Dokumentacja i instrukcja
+Pełna dokumentacja i rozszerzona instrukcja znajduje się w folderze `docs`.
+
+
+# Podstawowe założenia 
 - [x] Jako program zaliczeniowy rozumiemy parę programów serwer i klient.
 - [x] serwer ma możliwość obsługi wielu klientów jednocześnie.
 - [x] W każdym z programów należy zaimplementować własny protokół
@@ -26,7 +30,7 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 - [x] Brak któregokolwiek z plików w paczce oddanej jako program zaliczeniowy (w paczce powinien znaleźć się program klienta, program serwera, opis protokołu, opis uruchomienia programu) skutkuje brakiem zaliczenia.
 
 
-### Uzyskanie większej liczby punktów niż 50 wymaga:
+## Uzyskanie większej liczby punktów niż 50 wymaga:
 - [x] 1. zaimplementowania logiki, która wykorzystuje więcej niż 3 rodzaje przesyłanych wiadomości oraz  
 - [x] 2. wykorzystania co najmniej 1 mechanizmu z poniższych:
     ~~a. synchronizacja wątków,~~
@@ -34,7 +38,7 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
     ~~c. obsługa wielu procesów równolegle,~~
 
 
-### Uzyskanie większej liczby punktów niż 65 wymaga:
+## Uzyskanie większej liczby punktów niż 65 wymaga:
 - [x] 1. spełnienia warunków z punktu powyższego oraz
 - [x] 2. wykorzystania co najmniej 2 z poniższych mechanizmów:
         ~~a. inna architektura niż klient-serwer, ~~
