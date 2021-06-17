@@ -9,9 +9,9 @@ import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from random import randrange
-from time import sleep
 
 import pygame
+
 from src.config import *
 from src.game_classes import Player
 from src.serializers import serialize_game_objects
@@ -113,7 +113,7 @@ class TankGame():
         if auth in self.connected_players:
             temp = self.connected_players[auth].player_game_object
             new_player_profile.player_game_object = temp
-        self.connected_players[auth] = new_player_profile  
+        self.connected_players[auth] = new_player_profile
         return new_player_profile
 
     def accept_new_players(self):
@@ -267,8 +267,9 @@ class MainGameServerProtocol(asyncio.Protocol):
                         mess = prepare_status_msg(400, message='Fail')
                     self.transport.write(mess)
                 elif command == 'LIST_GAMES':
-                    games = [[tankgame.connected_players.get(tankgame.host_uuid, code).player_game_object.nickname, code] 
-                                for code, tankgame in AVAILABLE_GAMES.items()]
+                    games = [
+                        [tankgame.connected_players.get(tankgame.host_uuid, code).player_game_object.nickname, code]
+                        for code, tankgame in AVAILABLE_GAMES.items()]
                     mess = prepare_status_msg(200, message='Success', data=str(list(games)))
                     self.transport.write(mess)
                 else:
