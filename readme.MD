@@ -45,11 +45,11 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 
 ## Features
 - [x] Tworzenie pokojów
-- [x] Invide po kodzie
-- [x] Wysyłanie i odbieranie na odzielnym wątku
+- [x] Zapraszanie po 4-znakowym kodzie
+- [x] Wysyłanie i odbieranie na oddzielnym wątku
 - [x] Możliwość zmiany nicku w (nawet trakcie gry)
-- [x] Rejstracja przy pierwszym podłączeniu
-- [x] Przeglądanie dostępnych gier listowanych po nicku graczy
+- [x] Rejestracja przy pierwszym podłączeniu
+- [x] Przeglądanie dostępnych gier listwowanych po nicku graczy
 - [x] Szyfrowanie z użyciem ssl
 - [x] Powolne tracenie życia po rozłączeniu się, do momentu ponownego podłączenia lub ŚMIECI
 - [x] Zajęte miejsce po końcu gry
