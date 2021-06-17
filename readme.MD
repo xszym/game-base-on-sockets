@@ -64,6 +64,6 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
     - [x] c. serwer zdarzeniowy, 
     - [x] d. połączenia szyfrowane.  
     
-
+    
 ## To improve
 - [ ] Generowanie i wymiana unikatowych kluczy dla każdego klienta (SSL)
