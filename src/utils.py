@@ -89,7 +89,7 @@ def recv_from_socket_to_pointer(_socket, value):
 
 def send_to_socket_from_pointer(_socket, value):
     last_send_value = ''
-    last_update_millis = current_milliseconds()
+    last_update_millis = 0
     while True:
         try:
             now_millis = current_milliseconds()
