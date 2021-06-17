@@ -53,7 +53,7 @@ def open_new_connection(port=0):
 
 
 class PlayerProfil():
-    def __init__(self, client_socket, connected_players_profiles, uuid=0, nickname='nickname'):
+    def __init__(self, client_socket, connected_players_profiles, uuid=0):
         self.socket = client_socket
         self.socket_port = get_port_of_socket(self.socket)
 
@@ -267,7 +267,9 @@ class MainGameServerProtocol(asyncio.Protocol):
                         mess = prepare_status_msg(400, message='Fail')
                     self.transport.write(mess)
                 elif command == 'LIST_GAMES':
-                    mess = prepare_status_msg(200, message='Success', data=str(list(AVAILABLE_GAMES.keys())))
+                    games = [[tankgame.connected_players.get(tankgame.host_uuid, code).player_game_object.nickname, code] 
+                                for code, tankgame in AVAILABLE_GAMES.items()]
+                    mess = prepare_status_msg(200, message='Success', data=str(list(games)))
                     self.transport.write(mess)
                 else:
                     mess = prepare_status_msg(400, message='Invalid command')

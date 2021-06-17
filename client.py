@@ -190,7 +190,7 @@ def list_games(_=None, __=None):
         global AVAILABLE_GAMES
         games = response.get('data', '[]')
         games = eval(games)
-        games = [(g, g) for g in games]
+        games = [(nick, code) for nick, code in games]
         if len(games) > 0:
             AVAILABLE_GAMES = games
         else:
@@ -216,7 +216,7 @@ def update_join_status(code):
 def join_room(code, _=None):
     global MY_UUID
     if isinstance(code, tuple):
-        code = code[0][0]
+        code = code[0][1]
     mess = prepare_standard_msg(command='JOIN_CHANNEL', auth=MY_UUID, data=code)
     try:
         MAIN_SERVER_SOCKET.sendall(mess)
