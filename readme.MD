@@ -2,6 +2,21 @@
 Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTAŃ MISTRZEM CZOŁKÓW 2D!
 
 
+## Features
+- [x] Tworzenie pokojów (na nowym porcie)
+- [x] Invide po kodzie
+- [x] Wysyłanie i odbieranie na odzielnym wątku
+- [x] Możliwość zmiany nicku w (nawet trakcie gry)
+- [x] Rejstracja przy pierwszym podłączeniu
+- [x] Przeglądanie dostępnych gier listowanych po nicku graczy
+- [x] Szyfrowanie z użyciem ssl
+- [x] Powolne tracenie życia po rozłączeniu się, do momentu ponownego podłączenia lub ŚMIECI
+- [x] Zajęte miejsce po końcu gry
+- [x] SUPER muzyka w tle, której nie da się wyłączyć!
+- [x] Skonfigurowane CD (continuous deployment)
+- [x] Limit możliwych gier w zależności od udostępnionych portów
+
+
 # Setup
 - ```pip3 install -r requirements.txt```
 
@@ -11,8 +26,15 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 
 
 ## Run own server
-- ```python3 server.py``` or ```docker-compose up --build```
-- ```python3 client.py -L``` for own local server
+
+### Using Docker-compose (recommended)
+```docker-compose up --build``` 
+
+### or Python (NOT recommended)
+```python3 server.py```
+
+### Client for local server
+```python3 client.py -L``` or ```python3 client.py --local```
 
 
 ## Podstawowe założenia 
@@ -41,20 +63,7 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
         ~~b. asynchroniczność (p2p),~~
     - [x] c. serwer zdarzeniowy, 
     - [x] d. połączenia szyfrowane.  
+    
 
-
-## Features
-- [x] Tworzenie pokojów
-- [x] Invide po kodzie
-- [x] Wysyłanie i odbieranie na odzielnym wątku
-- [x] Możliwość zmiany nicku w (nawet trakcie gry)
-- [x] Rejstracja przy pierwszym podłączeniu
-- [x] Przeglądanie dostępnych gier listowanych po nicku graczy
-- [x] Szyfrowanie z użyciem ssl
-- [x] Powolne tracenie życia po rozłączeniu się, do momentu ponownego podłączenia lub ŚMIECI
-- [x] Zajęte miejsce po końcu gry
-- [x] SUPER muzyka w tle, której nie da się wyłączyć!
-
-
-## TODO
+## To improve
 - [ ] Generowanie i wymiana unikatowych kluczy dla każdego klienta (SSL)
