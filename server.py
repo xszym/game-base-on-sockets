@@ -92,7 +92,8 @@ class TankGame():
         no_of_connections = 0
         for soc, player_profile in self.connected_players.items():
             if not player_profile.send_to_thread.is_alive():
-                player_profile.player_game_object.health = 0
+                player_profile.player_game_object.health -= 0.1
+                player_profile.player_game_object.health = max(player_profile.player_game_object.health, 0)
             else:
                 no_of_connections += 1
         return no_of_connections
@@ -155,8 +156,6 @@ def game_loop(tank_game):
             if recv_from_player != '':
                 nickname = recv_from_player.split(',', 1)[0]
                 auth = recv_from_player.split(',', 2)[1]
-                # if auth is not REGISTERED_CLIENTS:
-                #     continue
                 pressed_keys = recv_from_player.split(',', 2)[2]
                 pressed_keys = decode_game_msg(pressed_keys)
                 player_profile.player_game_object.nickname = nickname
