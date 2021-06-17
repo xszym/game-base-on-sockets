@@ -5,3 +5,4 @@ __pycache__/game_config.cpython-37.pyc
 ___pycache__/
 *.py[cod]
 .idea
+keys/server.key
