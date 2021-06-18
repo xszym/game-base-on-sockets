@@ -1,5 +1,5 @@
 # Tank2D - Programowanie Aplikacji Sieciowych 2021
-Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTAŃ MISTRZEM CZOŁKÓW 2D!
+Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTAŃ MISTRZEM CZOŁGÓW 2D!
 
 
 ## Features
