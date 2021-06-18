@@ -22,7 +22,7 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 
 
 ## Run Client for public server
-- ```python3 client.py``` for public server
+- ```python3 client.py``` for public server or ```python client.py```
 
 
 ## Run own server
@@ -31,10 +31,12 @@ Kozacka gra w którą może grać, każdy, z każdym na całym świecie! ZOSTA�
 ```docker-compose up --build``` 
 
 ### or Python (NOT recommended)
-```python3 server.py```
+```python3 server.py``` or ```python client.py```
 
 ### Client for local server
 ```python3 client.py -L``` or ```python3 client.py --local```
+or 
+```python client.py -L``` or ```python client.py --local```
 
 
 # Dokumentacja i instrukcja
