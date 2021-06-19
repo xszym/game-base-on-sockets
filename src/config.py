@@ -2,7 +2,6 @@ import os
 
 import pygame_menu
 
-
 # GAME
 ABOUT = ['Authors: Dorota i Szymon',
          'PAS 2021']
@@ -12,7 +11,6 @@ FONT_NAME = 'Comic Sans MS'
 # Sound source: http://ccmixter.org/files/Apoxode/59262
 # License: https://creativecommons.org/licenses/by/3.0/
 BACKGROUND_MUSIC_FILE_NAME = "media/Apoxode_-_Electric_1.ogg"
-
 
 SCREEN_WIDTH = 640
 SCREEN_HEIGHT = 480
@@ -33,7 +31,6 @@ K_LEFT = 2
 K_RIGHT = 3
 K_ESCAPE = 4
 K_SPACE = 5
-
 
 # SOCKETS / NETWORK
 PUBLIC_SERVER_IP = '159.89.9.110'

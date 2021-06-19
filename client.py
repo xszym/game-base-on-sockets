@@ -56,6 +56,7 @@ def connect_to_main_server():
         logging.error("Error while connecting to main server", e)
 
 
+
 def get_own_uuid():
     global MY_UUID
     global MAIN_SERVER_SOCKET
