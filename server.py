@@ -30,9 +30,6 @@ def get_port_of_socket(sock):
 
 
 def open_new_connection(port=0):
-    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile='keys/client.crt')
-    ssl_context.check_hostname = False
-    ssl_context.load_cert_chain('keys/server.crt', 'keys/server.key')
     if port == 0:
         while True:
             try:
@@ -289,7 +286,6 @@ thread_pool = ThreadPoolExecutor()
 loop = asyncio.get_event_loop()
 
 ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH, cafile='keys/client.crt')
-ssl_context.check_hostname = False
 ssl_context.load_cert_chain('keys/server.crt', 'keys/server.key')
 
 coroutine = loop.create_server(MainGameServerProtocol, host='0.0.0.0', port=MAIN_SERVER_SOCKET_PORT, ssl=ssl_context)

@@ -69,7 +69,3 @@ Pełna dokumentacja i rozszerzona instrukcja znajduje się w folderze `docs`.
         ~~b. asynchroniczność (p2p),~~
     - [x] c. serwer zdarzeniowy, 
     - [x] d. połączenia szyfrowane.  
-    
-    
-## To improve
-- [ ] Generowanie i wymiana unikatowych kluczy dla każdego klienta (SSL)

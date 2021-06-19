@@ -38,7 +38,6 @@ def create_ssl_context():
         cafile='keys/server.crt'
     )
     ssl_context.load_cert_chain('keys/client.crt', 'keys/client.key')
-    ssl_context.check_hostname = False
     return ssl_context
 
 
@@ -49,13 +48,13 @@ def connect_to_main_server():
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((SERVER_IP, MAIN_SERVER_SOCKET_PORT))
-
-        ssock = ssl_context.wrap_socket(sock, server_hostname=SERVER_IP)
+        ssock = ssl_context.wrap_socket(sock, server_hostname=SSL_SERVER_COMMON_NAME)
 
         global MAIN_SERVER_SOCKET
         MAIN_SERVER_SOCKET = ssock
-    except:
-        logging.error("Error while connecting to main server")
+    except Exception as e:
+        logging.error("Error while connecting to main server", e)
+
 
 
 def get_own_uuid():
@@ -97,7 +96,7 @@ def start_the_game(port):
     player_place = 'No place'
     game_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     game_socket.connect((SERVER_IP, port))
-    game_socket = ssl_context.wrap_socket(game_socket, server_hostname=SERVER_IP)
+    game_socket = ssl_context.wrap_socket(game_socket, server_hostname=SSL_SERVER_COMMON_NAME)
 
     recv_from_last_value = ['']
     send_to_newest_value = ['']
