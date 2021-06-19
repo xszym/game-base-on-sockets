@@ -58,7 +58,3 @@ Pełna dokumentacja i rozszerzona instrukcja znajduje się w folderze `docs`.
 - [x] Powolne tracenie życia po rozłączeniu się, do momentu ponownego podłączenia lub ŚMIECI
 - [x] Zajęte miejsce po końcu gry
 - [x] SUPER muzyka w tle, której nie da się wyłączyć!
-
-
-## TODO
-- [ ] Generowanie i wymiana unikatowych kluczy dla każdego klienta (SSL)

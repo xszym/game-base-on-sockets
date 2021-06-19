@@ -6,3 +6,5 @@ ___pycache__/
 *.py[cod]
 .idea
 keys/server.key
+venv/
+/venv/

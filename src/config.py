@@ -37,6 +37,7 @@ K_SPACE = 5
 
 # SOCKETS / NETWORK
 PUBLIC_SERVER_IP = '159.89.9.110'
+SSL_SERVER_COMMON_NAME = 'PAS - Tank2D'
 MAIN_SERVER_SOCKET_PORT = int(os.environ.get('PORT', default=40000))
 MIN_PORT = int(os.environ.get('GAME_PORTS_MIN', default=40400))
 MAX_PORT = int(os.environ.get('GAME_PORTS_MAX', default=40420))
